@@ -1,0 +1,247 @@
+# Performance and Load Tests
+# Test API performance and edge cases
+
+@baseUrl = http://localhost
+
+### Performance Test 1: Rapid Webhook Messages
+### Send multiple messages quickly
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "perf_test_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150000,
+      "pushName": "Speed Test User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Performance test message #1"
+      },
+      "remoteJid": "speed_test@s.whatsapp.net",
+      "id": "PERF_MSG_001"
+    }
+  },
+  "timestamp": 1759150005000
+}
+
+###
+
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "perf_test_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150010,
+      "pushName": "Speed Test User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Performance test message #2"
+      },
+      "remoteJid": "speed_test@s.whatsapp.net",
+      "id": "PERF_MSG_002"
+    }
+  },
+  "timestamp": 1759150015000
+}
+
+###
+
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "perf_test_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150020,
+      "pushName": "Speed Test User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Performance test message #3"
+      },
+      "remoteJid": "speed_test@s.whatsapp.net",
+      "id": "PERF_MSG_003"
+    }
+  },
+  "timestamp": 1759150025000
+}
+
+###
+
+### Performance Test 2: Large Query Results
+GET {{baseUrl}}/messages/recent?hours=168&limit=1000
+Content-Type: application/json
+
+###
+
+### Edge Case 1: Empty Message Content
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "edge_case_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150100,
+      "pushName": "Empty Message User",
+      "broadcast": false,
+      "message": {
+        "conversation": ""
+      },
+      "remoteJid": "empty_msg@s.whatsapp.net",
+      "id": "EMPTY_MSG_001"
+    }
+  },
+  "timestamp": 1759150105000
+}
+
+###
+
+### Edge Case 2: Special Characters
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "edge_case_session_002",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150200,
+      "pushName": "Special Chars User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Testing special characters: !@#$%^&*()_+-=[]{}|;':\",./<>? áéíóú ñüç 中文 🚀🎉😊"
+      },
+      "remoteJid": "special_chars@s.whatsapp.net",
+      "id": "SPECIAL_MSG_001"
+    }
+  },
+  "timestamp": 1759150205000
+}
+
+###
+
+### Edge Case 3: Very Long Session ID
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "this_is_a_very_long_session_id_that_might_cause_issues_if_not_handled_properly_in_the_database_or_api_endpoints_1234567890",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150300,
+      "pushName": "Long Session User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Testing with very long session ID"
+      },
+      "remoteJid": "long_session@s.whatsapp.net",
+      "id": "LONG_SESSION_MSG_001"
+    }
+  },
+  "timestamp": 1759150305000
+}
+
+###
+
+### Edge Case 4: Null/Undefined Fields
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "null_test_session",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150400,
+      "pushName": null,
+      "broadcast": false,
+      "message": {
+        "conversation": "Testing with null pushName"
+      },
+      "remoteJid": "null_test@s.whatsapp.net",
+      "id": "NULL_MSG_001"
+    }
+  },
+  "timestamp": 1759150405000
+}
+
+###
+
+### Load Test: Multiple AI Requests
+POST {{baseUrl}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Quick test message 1",
+  "options": {
+    "maxTokens": 50
+  }
+}
+
+###
+
+POST {{baseUrl}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Quick test message 2",
+  "options": {
+    "maxTokens": 50
+  }
+}
+
+###
+
+POST {{baseUrl}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Quick test message 3",
+  "options": {
+    "maxTokens": 50
+  }
+}
+
+###
+
+### Stress Test: Complex Search Queries
+GET {{baseUrl}}/messages/search?q=test%20message%20performance&limit=100
+Content-Type: application/json
+
+###
+
+### Memory Test: Large AI Context
+POST {{baseUrl}}/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    {"role": "system", "content": "You are a helpful assistant with detailed knowledge about API development, database optimization, webhook processing, message queuing, real-time communication, scalability patterns, microservices architecture, cloud deployment strategies, monitoring and logging best practices, security implementations, and performance optimization techniques."},
+    {"role": "user", "content": "Tell me about webhook scalability patterns."},
+    {"role": "assistant", "content": "Webhook scalability involves several key patterns: 1) Queue-based processing to handle spikes, 2) Horizontal scaling with load balancers, 3) Retry mechanisms with exponential backoff, 4) Circuit breakers for fault tolerance, 5) Rate limiting to prevent overload, 6) Monitoring and alerting for proactive management."},
+    {"role": "user", "content": "How do you implement retry mechanisms effectively?"},
+    {"role": "assistant", "content": "Effective retry mechanisms use exponential backoff (starting with 1s, then 2s, 4s, 8s), jitter to prevent thundering herd, maximum retry limits (usually 3-5), dead letter queues for failed messages, and different strategies for different error types (immediate retry for 5xx, no retry for 4xx)."},
+    {"role": "user", "content": "What about database optimization for high-volume message processing?"}
+  ],
+  "options": {
+    "temperature": 0.3,
+    "maxTokens": 800
+  }
+}
+
+###
+
+### Database Stress Test: Complex Statistics Query
+GET {{baseUrl}}/messages/stats
+Content-Type: application/json
+
+###

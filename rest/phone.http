@@ -1,0 +1,209 @@
+# Phone Number Extraction Tests
+# Test the phone number extraction functionality from remoteJid
+
+@baseUrl = http://localhost
+
+### Test Individual WhatsApp User
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "256703722777@s.whatsapp.net"
+}
+
+###
+
+### Test WhatsApp Group
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "256704966899-1625215002@g.us"
+}
+
+###
+
+### Test Newsletter Channel
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "120363169319669622@newsletter"
+}
+
+###
+
+### Test US Phone Number
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "15551234567@s.whatsapp.net"
+}
+
+###
+
+### Test UK Phone Number
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "447911123456@s.whatsapp.net"
+}
+
+###
+
+### Test Invalid remoteJid
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "invalid_format"
+}
+
+###
+
+### Test Missing remoteJid
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+}
+
+###
+
+### Test Empty remoteJid
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": ""
+}
+
+###
+
+### Test Multiple Formats Batch
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "493012345678@s.whatsapp.net"
+}
+
+###
+
+### Get All Contacts with Phone Info
+GET {{baseUrl}}/phone/contacts
+Content-Type: application/json
+
+###
+
+### Get Individual Contacts Only
+GET {{baseUrl}}/phone/contacts?type=individual
+Content-Type: application/json
+
+###
+
+### Get Group Contacts Only
+GET {{baseUrl}}/phone/contacts?type=group
+Content-Type: application/json
+
+###
+
+### Get Newsletter Contacts Only
+GET {{baseUrl}}/phone/contacts?type=newsletter
+Content-Type: application/json
+
+###
+
+### Get Limited Number of Contacts
+GET {{baseUrl}}/phone/contacts?limit=10
+Content-Type: application/json
+
+###
+
+### Get Phone Number Statistics
+GET {{baseUrl}}/phone/stats
+Content-Type: application/json
+
+###
+
+### Test Edge Cases - Very Long Number
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "1234567890123456789@s.whatsapp.net"
+}
+
+###
+
+### Test Edge Cases - Very Short Number
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "123@s.whatsapp.net"
+}
+
+###
+
+### Test Edge Cases - Non-numeric Characters
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "256abc722777@s.whatsapp.net"
+}
+
+###
+
+### Test Real-World Examples from Database
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "256784330780@s.whatsapp.net"
+}
+
+###
+
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "263774108597-1518106397@g.us"
+}
+
+###
+
+### Test International Numbers - Different Countries
+### India
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "919876543210@s.whatsapp.net"
+}
+
+###
+
+### Brazil
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "5511987654321@s.whatsapp.net"
+}
+
+###
+
+### Nigeria
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "2348012345678@s.whatsapp.net"
+}
+
+###

@@ -1,0 +1,205 @@
+### ============================================
+### WHATSAPP MESSAGE SENDING TESTS
+### ============================================
+### Test the message sending functionality using Wasender API
+### 
+### Required Environment Variables:
+### - WASENDER_API_TOKEN: Your Wasender API bearer token
+### - WASENDER_API_URL: API endpoint (optional, defaults to https://wasenderapi.com/api/send-message)
+###
+### Usage: 
+### 1. Update phone numbers below with real test numbers
+### 2. Set your Wasender API token in .env file or use inline
+### 3. Click "Send Request" next to each test
+### ============================================
+
+@baseUrl = http://localhost
+@port = 80
+
+### === BASIC MESSAGE SEND ===
+
+### Test 1: Send a simple text message
+POST {{baseUrl}}:{{port}}/message/send
+Content-Type: application/json
+
+{
+    "to": "+1234567890",
+    "text": "Hello from API! This is a test message."
+}
+
+### Test 2: Send message with custom API token
+POST {{baseUrl}}:{{port}}/message/send
+Content-Type: application/json
+
+{
+    "to": "+256703722777",
+    "text": "Testing with Uganda number 🇺🇬",
+    "apiToken": "7880f22816319b6c2483f36f377abaea7879fb2418102735f1bb7dbacd1b154c"
+}
+
+### Test 3: Send message with emoji and special characters
+POST {{baseUrl}}:{{port}}/message/send
+Content-Type: application/json
+
+{
+    "to": "+263774108597",
+    "text": "Testing Zimbabwe number! 🇿🇼 ✅ Special chars: @#$%^&*()"
+}
+
+### === BULK MESSAGE SEND ===
+
+### Test 4: Send messages to multiple recipients
+POST {{baseUrl}}:{{port}}/message/send-bulk
+Content-Type: application/json
+
+{
+    "messages": [
+        {
+            "to": "+1234567890",
+            "text": "Bulk message 1 - Hello from API!"
+        },
+        {
+            "to": "+256703722777",
+            "text": "Bulk message 2 - Uganda test 🇺🇬"
+        },
+        {
+            "to": "+263774108597",
+            "text": "Bulk message 3 - Zimbabwe test 🇿🇼"
+        }
+    ]
+}
+
+### Test 5: Bulk send with custom API token
+POST {{baseUrl}}:{{port}}/message/send-bulk
+Content-Type: application/json
+
+{
+    "messages": [
+        {
+            "to": "+447911123456",
+            "text": "UK number test 🇬🇧"
+        },
+        {
+            "to": "+15551234567",
+            "text": "US number test 🇺🇸"
+        }
+    ],
+    "apiToken": "7880f22816319b6c2483f36f377abaea7879fb2418102735f1bb7dbacd1b154c"
+}
+
+### === ERROR HANDLING TESTS ===
+
+### Test 6: Send message without phone number (should fail)
+POST {{baseUrl}}:{{port}}/message/send
+Content-Type: application/json
+
+{
+    "text": "This should fail - no phone number"
+}
+
+### Test 7: Send message without text (should fail)
+POST {{baseUrl}}:{{port}}/message/send
+Content-Type: application/json
+
+{
+    "to": "+1234567890"
+}
+
+### Test 8: Send bulk with empty messages array (should fail)
+POST {{baseUrl}}:{{port}}/message/send-bulk
+Content-Type: application/json
+
+{
+    "messages": []
+}
+
+### Test 9: Send bulk with invalid message format (should fail)
+POST {{baseUrl}}:{{port}}/message/send-bulk
+Content-Type: application/json
+
+{
+    "messages": [
+        {
+            "to": "+1234567890",
+            "text": "Valid message"
+        },
+        {
+            "to": "+0987654321"
+            // Missing text field
+        }
+    ]
+}
+
+### === REAL WORLD SCENARIOS ===
+
+### Test 10: Send long message
+POST {{baseUrl}}:{{port}}/message/send
+Content-Type: application/json
+
+{
+    "to": "+1234567890",
+    "text": "This is a longer message to test how the API handles extended text content. It contains multiple sentences and should demonstrate that longer messages work properly through the Wasender API integration. This message is intentionally verbose to test character limits and formatting."
+}
+
+### Test 11: Send message with line breaks
+POST {{baseUrl}}:{{port}}/message/send
+Content-Type: application/json
+
+{
+    "to": "+256703722777",
+    "text": "Multi-line message:\n\nLine 1: Welcome to our service!\nLine 2: Your account is now active.\nLine 3: Thank you for joining us.\n\nBest regards,\nThe Team"
+}
+
+### Test 12: Send notification-style message
+POST {{baseUrl}}:{{port}}/message/send
+Content-Type: application/json
+
+{
+    "to": "+263774108597",
+    "text": "🔔 NOTIFICATION\n\n✅ Your order #12345 has been confirmed\n📦 Estimated delivery: 2-3 business days\n📞 Questions? Reply to this message\n\nThank you for your purchase!"
+}
+
+### === INTEGRATION TESTS ===
+
+### Test 13: Send AI-generated response (combine with AI endpoint)
+# First get an AI response, then send it
+POST {{baseUrl}}:{{port}}/ai/chat
+Content-Type: application/json
+
+{
+    "message": "Generate a friendly welcome message for a new WhatsApp bot user",
+    "options": {
+        "maxTokens": 100,
+        "temperature": 0.7
+    }
+}
+
+### Then send the AI response (manually copy the response above)
+POST {{baseUrl}}:{{port}}/message/send
+Content-Type: application/json
+
+{
+    "to": "+1234567890",
+    "text": "Welcome to our WhatsApp bot! 🤖 I'm here to help you with any questions or assistance you might need. Feel free to send me a message anytime, and I'll do my best to provide helpful responses. Let's get started!"
+}
+
+### === PERFORMANCE TESTS ===
+
+### Test 14: Rapid bulk send (10 messages)
+POST {{baseUrl}}:{{port}}/message/send-bulk
+Content-Type: application/json
+
+{
+    "messages": [
+        {"to": "+1234567890", "text": "Performance test message 1"},
+        {"to": "+1234567891", "text": "Performance test message 2"},
+        {"to": "+1234567892", "text": "Performance test message 3"},
+        {"to": "+1234567893", "text": "Performance test message 4"},
+        {"to": "+1234567894", "text": "Performance test message 5"},
+        {"to": "+1234567895", "text": "Performance test message 6"},
+        {"to": "+1234567896", "text": "Performance test message 7"},
+        {"to": "+1234567897", "text": "Performance test message 8"},
+        {"to": "+1234567898", "text": "Performance test message 9"},
+        {"to": "+1234567899", "text": "Performance test message 10"}
+    ]
+}

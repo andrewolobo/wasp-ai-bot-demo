@@ -1,0 +1,253 @@
+# End-to-End Workflow Tests
+# Test complete workflows from webhook to AI analysis
+
+@baseUrl = http://localhost
+
+### Workflow 1: Send Message → Query → Analyze
+### Step 1: Send a webhook message
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "workflow_test_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140000,
+      "pushName": "Workflow User",
+      "broadcast": false,
+      "message": {
+        "conversation": "I'm having trouble with my account setup. Can you help me understand the process?"
+      },
+      "remoteJid": "workflow_user@s.whatsapp.net",
+      "id": "WORKFLOW_MSG_001"
+    }
+  },
+  "timestamp": 1759140005000
+}
+
+###
+
+### Step 2: Send another message from the same user
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "workflow_test_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140020,
+      "pushName": "Workflow User",
+      "broadcast": false,
+      "message": {
+        "conversation": "I've tried following the documentation but I'm still confused about the API keys."
+      },
+      "remoteJid": "workflow_user@s.whatsapp.net",
+      "id": "WORKFLOW_MSG_002"
+    }
+  },
+  "timestamp": 1759140025000
+}
+
+###
+
+### Step 3: Query messages by session
+GET {{baseUrl}}/messages/session/workflow_test_session_001
+Content-Type: application/json
+
+###
+
+### Step 4: Analyze the conversation
+POST {{baseUrl}}/ai/analyze-conversation
+Content-Type: application/json
+
+{
+  "sessionId": "workflow_test_session_001",
+  "prompt": "This user seems to be having technical difficulties. What specific help do they need and what's their emotional state?",
+  "limit": 10
+}
+
+###
+
+### Step 5: Generate a summary
+POST {{baseUrl}}/ai/summarize
+Content-Type: application/json
+
+{
+  "sessionId": "workflow_test_session_001",
+  "limit": 10
+}
+
+###
+
+### Workflow 2: Multiple Users → Search → AI Analysis
+### Step 1: Message from User A
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "multi_user_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140100,
+      "pushName": "Alice",
+      "broadcast": false,
+      "message": {
+        "conversation": "The new feature is amazing! I love the AI integration."
+      },
+      "remoteJid": "alice@s.whatsapp.net",
+      "id": "ALICE_MSG_001"
+    }
+  },
+  "timestamp": 1759140105000
+}
+
+###
+
+### Step 2: Message from User B
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "multi_user_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140150,
+      "pushName": "Bob",
+      "broadcast": false,
+      "message": {
+        "conversation": "I'm having issues with the AI feature. It's not responding correctly."
+      },
+      "remoteJid": "bob@s.whatsapp.net",
+      "id": "BOB_MSG_001"
+    }
+  },
+  "timestamp": 1759140155000
+}
+
+###
+
+### Step 3: Search for AI-related messages
+GET {{baseUrl}}/messages/search?q=AI&limit=10
+Content-Type: application/json
+
+###
+
+### Step 4: Get statistics
+GET {{baseUrl}}/messages/stats
+Content-Type: application/json
+
+###
+
+### Step 5: Analyze conversation sentiment across multiple users
+POST {{baseUrl}}/ai/analyze-conversation
+Content-Type: application/json
+
+{
+  "sessionId": "multi_user_session_001",
+  "prompt": "Compare the sentiment between different users in this conversation. Who is satisfied and who is having issues?",
+  "limit": 10
+}
+
+###
+
+### Workflow 3: Newsletter → Broadcast Analysis
+### Step 1: Send newsletter message
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "newsletter_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140200,
+      "broadcast": true,
+      "message": {
+        "conversation": "🚀 Exciting News! We're launching new AI-powered features next week. Stay tuned for updates and enjoy enhanced automation capabilities!"
+      },
+      "remoteJid": "120363169319669622@newsletter",
+      "id": "NEWSLETTER_001"
+    }
+  },
+  "timestamp": 1759140205000
+}
+
+###
+
+### Step 2: Analyze newsletter content
+POST {{baseUrl}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Analyze this newsletter message and suggest improvements for engagement: '🚀 Exciting News! We're launching new AI-powered features next week. Stay tuned for updates and enjoy enhanced automation capabilities!'",
+  "options": {
+    "temperature": 0.6,
+    "maxTokens": 300
+  }
+}
+
+###
+
+### Workflow 4: Error Handling Test
+### Step 1: Send malformed webhook
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "error_test_session"
+}
+
+###
+
+### Step 2: Try to analyze non-existent session
+POST {{baseUrl}}/ai/analyze-conversation
+Content-Type: application/json
+
+{
+  "sessionId": "non_existent_session_12345",
+  "prompt": "Analyze this conversation",
+  "limit": 5
+}
+
+###
+
+### Step 3: Test with very long message
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "long_message_test",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140300,
+      "pushName": "Verbose User",
+      "broadcast": false,
+      "message": {
+        "conversation": "This is an extremely long message that contains a lot of information and details about various topics including technology, artificial intelligence, machine learning, natural language processing, automation, webhooks, API development, database management, and many other technical subjects that might be relevant to our discussion and analysis. The purpose of this message is to test how well the system handles longer text inputs and whether the AI analysis can effectively process and summarize content of varying lengths."
+      },
+      "remoteJid": "verbose_user@s.whatsapp.net",
+      "id": "LONG_MSG_001"
+    }
+  },
+  "timestamp": 1759140305000
+}
+
+###
+
+### Step 4: Analyze the long message
+POST {{baseUrl}}/ai/analyze-conversation
+Content-Type: application/json
+
+{
+  "sessionId": "long_message_test",
+  "prompt": "Extract key topics and themes from this lengthy message. Provide a structured analysis.",
+  "limit": 5
+}
+
+###

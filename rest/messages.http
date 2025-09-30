@@ -1,0 +1,100 @@
+# Message Query Tests
+# Test message retrieval and search endpoints
+
+@baseUrl = http://localhost
+
+### Get Messages by Session ID
+GET {{baseUrl}}/messages/session/test_session_123456789
+Content-Type: application/json
+
+###
+
+### Get Messages by Session ID with Limit
+GET {{baseUrl}}/messages/session/test_session_123456789?limit=10
+Content-Type: application/json
+
+###
+
+### Get Messages by Contact (remoteJid)
+GET {{baseUrl}}/messages/contact/256703722777@s.whatsapp.net
+Content-Type: application/json
+
+###
+
+### Get Messages by Contact with Limit
+GET {{baseUrl}}/messages/contact/256703722777@s.whatsapp.net?limit=5
+Content-Type: application/json
+
+###
+
+### Search Messages - Simple Text
+GET {{baseUrl}}/messages/search?q=hello
+Content-Type: application/json
+
+###
+
+### Search Messages - With Limit
+GET {{baseUrl}}/messages/search?q=test&limit=20
+Content-Type: application/json
+
+###
+
+### Search Messages - Emoji
+GET {{baseUrl}}/messages/search?q=😊
+Content-Type: application/json
+
+###
+
+### Search Messages - Case Insensitive
+GET {{baseUrl}}/messages/search?q=HELLO
+Content-Type: application/json
+
+###
+
+### Get Recent Messages - Default (24 hours)
+GET {{baseUrl}}/messages/recent
+Content-Type: application/json
+
+###
+
+### Get Recent Messages - Custom Hours
+GET {{baseUrl}}/messages/recent?hours=48
+Content-Type: application/json
+
+###
+
+### Get Recent Messages - With Limit
+GET {{baseUrl}}/messages/recent?hours=24&limit=50
+Content-Type: application/json
+
+###
+
+### Get Message Statistics
+GET {{baseUrl}}/messages/stats
+Content-Type: application/json
+
+###
+
+### Test Invalid Session ID
+GET {{baseUrl}}/messages/session/invalid_session_id_that_does_not_exist
+Content-Type: application/json
+
+###
+
+### Test Invalid Contact
+GET {{baseUrl}}/messages/contact/invalid_contact@s.whatsapp.net
+Content-Type: application/json
+
+###
+
+### Search with Empty Query (Should Error)
+GET {{baseUrl}}/messages/search?q=
+Content-Type: application/json
+
+###
+
+### Search without Query Parameter (Should Error)
+GET {{baseUrl}}/messages/search
+Content-Type: application/json
+
+###

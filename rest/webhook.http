@@ -1,0 +1,221 @@
+# Webhook Tests
+# Test WhatsApp webhook endpoint with various scenarios
+
+@baseUrl = http://localhost
+
+### Test Valid WhatsApp Webhook - Text Message
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "test_session_123456789",
+  "data": {
+    "messages": {
+      "key": {
+        "remoteJid": "256703722777@s.whatsapp.net",
+        "fromMe": false,
+        "id": "3AB78DC5DCA66DB1F351"
+      },
+      "messageTimestamp": 1759132885,
+      "pushName": "Test User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Hello! This is a test message from REST Client."
+      },
+      "remoteJid": "256703722777@s.whatsapp.net",
+      "id": "3AB78DC5DCA66DB1F351"
+    }
+  },
+  "timestamp": 1759132890000
+}
+
+###
+
+### Test WhatsApp Webhook - Emoji Message
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "test_session_123456789",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759132900,
+      "pushName": "Emoji User",
+      "broadcast": false,
+      "message": {
+        "conversation": "😊🎉👍"
+      },
+      "remoteJid": "256703722777@s.whatsapp.net",
+      "id": "MSG_EMOJI_TEST_001"
+    }
+  },
+  "timestamp": 1759132905000
+}
+
+###
+
+### Test WhatsApp Webhook - Extended Text Message
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "test_session_123456789",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759132910,
+      "pushName": "Long Message User",
+      "broadcast": false,
+      "message": {
+        "extendedTextMessage": {
+          "text": "This is a longer message with extended text format. It might contain URLs, mentions, or other rich content."
+        }
+      },
+      "remoteJid": "256703722777@s.whatsapp.net",
+      "id": "MSG_EXTENDED_TEST_001"
+    }
+  },
+  "timestamp": 1759132915000
+}
+
+###
+
+### Test WhatsApp Webhook - Newsletter Message
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "newsletter_session_123",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759132920,
+      "broadcast": true,
+      "message": {
+        "conversation": "Newsletter update: New features available!"
+      },
+      "remoteJid": "120363169319669622@newsletter",
+      "id": "NEWSLETTER_MSG_001"
+    }
+  },
+  "timestamp": 1759132925000
+}
+
+###
+
+### Test Invalid Webhook - Missing Data
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "invalid_test"
+}
+
+###
+
+### Test Invalid Webhook - Wrong Event Type
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "status.update",
+  "sessionId": "status_session_123",
+  "data": {
+    "status": "online"
+  },
+  "timestamp": 1759132930000
+}
+
+###
+
+### Test Andrew AI Response - Trigger AI conversation
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "andrew_test_session",
+  "data": {
+    "messages": {
+      "key": {
+        "remoteJid": "256703722777@s.whatsapp.net",
+        "fromMe": false,
+        "id": "ANDREW_MSG_001"
+      },
+      "messageTimestamp": 1759132935,
+      "pushName": "Test User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Andrew, can you help me with a question about AI?"
+      },
+      "remoteJid": "256703722777@s.whatsapp.net",
+      "id": "ANDREW_MSG_001"
+    }
+  },
+  "timestamp": 1759132940000
+}
+
+###
+
+### Test Andrew AI Response - Casual greeting
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "andrew_test_session",
+  "data": {
+    "messages": {
+      "key": {
+        "remoteJid": "263774108597@s.whatsapp.net",
+        "fromMe": false,
+        "id": "ANDREW_MSG_002"
+      },
+      "messageTimestamp": 1759132945,
+      "pushName": "Zimbabwe User",
+      "broadcast": false,
+      "message": {
+        "conversation": "andrew hello there! How are you today?"
+      },
+      "remoteJid": "263774108597@s.whatsapp.net",
+      "id": "ANDREW_MSG_002"
+    }
+  },
+  "timestamp": 1759132950000
+}
+
+###
+
+### Test Andrew AI Response - Extended text message
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "andrew_test_session",
+  "data": {
+    "messages": {
+      "key": {
+        "remoteJid": "447911123456@s.whatsapp.net",
+        "fromMe": false,
+        "id": "ANDREW_MSG_003"
+      },
+      "messageTimestamp": 1759132955,
+      "pushName": "UK User",
+      "broadcast": false,
+      "message": {
+        "extendedTextMessage": {
+          "text": "Andrew, I need some advice about machine learning. What's the best way to get started?"
+        }
+      },
+      "remoteJid": "447911123456@s.whatsapp.net",
+      "id": "ANDREW_MSG_003"
+    }
+  },
+  "timestamp": 1759132960000
+}
+
+###

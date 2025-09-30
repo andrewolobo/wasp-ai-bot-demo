@@ -1,0 +1,217 @@
+# Azure OpenAI Tests
+# Test AI-powered endpoints for chat completion, conversation analysis, and summarization
+
+@baseUrl = http://localhost
+
+### Basic Chat Completion - Simple Message
+POST {{baseUrl}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Hello! Can you explain what a WhatsApp webhook is in simple terms?"
+}
+
+###
+
+### Chat Completion with Options
+POST {{baseUrl}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Write a short poem about artificial intelligence.",
+  "options": {
+    "temperature": 0.8
+  }
+}
+
+###
+
+### Chat Completion with Conversation History
+POST {{baseUrl}}/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    {"role": "system", "content": "You are a helpful assistant specializing in WhatsApp automation."},
+    {"role": "user", "content": "What are the benefits of using webhooks?"},
+    {"role": "assistant", "content": "Webhooks provide real-time notifications, reduce polling overhead, and enable instant response to events."},
+    {"role": "user", "content": "How do they work specifically with WhatsApp Business API?"}
+  ],
+  "options": {
+    "temperature": 0.3
+  }
+}
+
+###
+
+### Chat Completion - Technical Question
+POST {{baseUrl}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Explain the difference between SQLite and PostgreSQL for a messaging application.",
+  "options": {
+    "temperature": 0.2,
+    "maxTokens": 500
+  }
+}
+
+###
+
+### Analyze Conversation by Session ID
+POST {{baseUrl}}/ai/analyze-conversation
+Content-Type: application/json
+
+{
+  "sessionId": "7880f22816319b6c2483f36f377abaea7879fb2418102735f1bb7dbacd1b154c",
+  "prompt": "Analyze the sentiment and main topics of this conversation. What is the user's overall mood and what are they discussing?",
+  "limit": 10
+}
+
+###
+
+### Analyze Conversation by Contact
+POST {{baseUrl}}/ai/analyze-conversation
+Content-Type: application/json
+
+{
+  "remoteJid": "256784330780@s.whatsapp.net",
+  "prompt": "What are the key concerns or questions this user has raised in our conversations?",
+  "limit": 15
+}
+
+###
+
+### Conversation Analysis - Sentiment Focus
+POST {{baseUrl}}/ai/analyze-conversation
+Content-Type: application/json
+
+{
+  "sessionId": "test_session_123456789",
+  "prompt": "Focus only on the sentiment analysis. Is this conversation positive, negative, or neutral? Provide specific examples.",
+  "limit": 5
+}
+
+###
+
+### Conversation Analysis - Topic Extraction
+POST {{baseUrl}}/ai/analyze-conversation
+Content-Type: application/json
+
+{
+  "remoteJid": "256703722777@s.whatsapp.net",
+  "prompt": "Extract and list the main topics discussed in this conversation. Categorize them by importance.",
+  "limit": 20
+}
+
+###
+
+### Summarize Messages by Session
+POST {{baseUrl}}/ai/summarize
+Content-Type: application/json
+
+{
+  "sessionId": "test_session_123456789",
+  "limit": 25
+}
+
+###
+
+### Summarize Messages by Contact
+POST {{baseUrl}}/ai/summarize
+Content-Type: application/json
+
+{
+  "remoteJid": "256703722777@s.whatsapp.net",
+  "limit": 30
+}
+
+###
+
+### Summarize Recent Messages
+POST {{baseUrl}}/ai/summarize
+Content-Type: application/json
+
+{
+  "hours": 48,
+  "limit": 100
+}
+
+###
+
+### Summarize - Short Timeframe
+POST {{baseUrl}}/ai/summarize
+Content-Type: application/json
+
+{
+  "hours": 6,
+  "limit": 20
+}
+
+###
+
+### Test Invalid Chat Request - No Message
+POST {{baseUrl}}/ai/chat
+Content-Type: application/json
+
+{
+  "options": {
+    "temperature": 0.5
+  }
+}
+
+###
+
+### Test Invalid Conversation Analysis - No Prompt
+POST {{baseUrl}}/ai/analyze-conversation
+Content-Type: application/json
+
+{
+  "sessionId": "test_session_123456789",
+  "limit": 10
+}
+
+###
+
+### Test Invalid Conversation Analysis - No Session/Contact
+POST {{baseUrl}}/ai/analyze-conversation
+Content-Type: application/json
+
+{
+  "prompt": "Analyze this conversation",
+  "limit": 10
+}
+
+###
+
+### Test Summarization - No Messages Found
+POST {{baseUrl}}/ai/summarize
+Content-Type: application/json
+
+{
+  "sessionId": "non_existent_session_id",
+  "limit": 10
+}
+
+###
+
+### Chat Completion - Long Conversation Test
+POST {{baseUrl}}/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    {"role": "system", "content": "You are an expert in API development and database design."},
+    {"role": "user", "content": "I'm building a WhatsApp bot API with Node.js and SQLite."},
+    {"role": "assistant", "content": "That's a great choice! Node.js with Express is excellent for webhook handling, and SQLite is perfect for message storage. What specific functionality are you implementing?"},
+    {"role": "user", "content": "I need to store messages and analyze them with AI."},
+    {"role": "assistant", "content": "Perfect! You'll want to structure your database with proper indexing for fast queries, and integrate with AI services like OpenAI for analysis. Are you planning to use webhooks for real-time message processing?"},
+    {"role": "user", "content": "Yes, and I want to add conversation summarization features. What's the best approach?"}
+  ],
+  "options": {
+    "temperature": 0.4,
+    "maxTokens": 600
+  }
+}
+
+###

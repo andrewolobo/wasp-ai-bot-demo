@@ -1,0 +1,270 @@
+# WhatsApp AI Bot API - Complete Test Suite
+# Comprehensive testing for all API endpoints
+# This file provides an overview and quick access to all test categories
+
+@baseUrl = http://localhost
+
+### === QUICK HEALTH CHECK ===
+### Before running other tests, verify the API is running
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+###
+
+### === TEST CATEGORIES ===
+### 
+### 1. BASIC TESTS (basic.http)
+###    - Health check endpoint
+###    - API status endpoint
+###    - Invalid endpoint handling
+###
+### 2. WEBHOOK TESTS (webhook.http)
+###    - Valid WhatsApp webhook with text messages
+###    - Emoji messages
+###    - Extended text messages
+###    - Newsletter/broadcast messages
+###    - Invalid webhook data handling
+###    - Missing data scenarios
+###
+### 3. MESSAGE QUERY TESTS (messages.http)
+###    - Get messages by session ID
+###    - Get messages by contact (remoteJid)
+###    - Search messages by content
+###    - Get recent messages with time filters
+###    - Message statistics
+###    - Error handling for invalid parameters
+###
+### 4. AI TESTS (ai.http)
+###    - Basic chat completion
+###    - Chat with options (temperature, maxTokens)
+###    - Conversation history support
+###    - WhatsApp conversation analysis
+###    - Message summarization
+###    - Error handling for invalid AI requests
+###
+### 5. PHONE TESTS (phone.http)
+###    - Extract phone numbers from remoteJid
+###    - Support for individual, group, and newsletter formats
+###    - International phone number parsing
+###    - Get contact lists with phone information
+###    - Phone number statistics and analysis
+###
+### 6. MESSAGING TESTS (messaging.http)
+###    - Send individual WhatsApp messages via Wasender API
+###    - Bulk message sending to multiple recipients
+###    - Message formatting with emojis and special characters
+###    - Custom API token support
+###    - Error handling for invalid requests
+###    - Integration with AI endpoints for automated responses
+###    - Performance testing with bulk sends
+###
+### 7. ANDREW AI TESTS (andrew.http)
+###    - Automatic AI responses for messages starting with "Andrew"
+###    - Conversation context and history retrieval
+###    - AI response generation using Azure OpenAI GPT-4o
+###    - Automatic message sending back to users
+###    - Edge cases and performance testing
+###    - Integration of webhook, database, AI, and messaging features
+###
+### 8. WORKFLOW TESTS (workflows.http)
+###    - End-to-end scenarios from webhook to AI analysis
+###    - Multi-user conversation flows
+###    - Newsletter analysis workflows
+###    - Error handling workflows
+###
+### 9. PERFORMANCE TESTS (performance.http)
+###    - Rapid webhook processing
+###    - Large query results
+###    - Edge cases (empty messages, special characters)
+###    - Load testing for AI endpoints
+###    - Database stress testing
+###
+
+### === QUICK SMOKE TESTS ===
+### Run these to quickly verify core functionality
+
+### Test 1: Send a test webhook message
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "smoke_test_session",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759160000,
+      "pushName": "Smoke Test User",
+      "broadcast": false,
+      "message": {
+        "conversation": "This is a smoke test message to verify the API is working correctly."
+      },
+      "remoteJid": "smoke_test@s.whatsapp.net",
+      "id": "SMOKE_TEST_MSG_001"
+    }
+  },
+  "timestamp": 1759160005000
+}
+
+###
+
+### Test 2: Query the message we just sent
+GET {{baseUrl}}/messages/session/smoke_test_session
+Content-Type: application/json
+
+###
+
+### Test 3: Test basic AI functionality
+POST {{baseUrl}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Hello! This is a quick test to verify AI integration is working.",
+  "options": {
+    "maxTokens": 100
+  }
+}
+
+###
+
+### Test 4: Get message statistics
+GET {{baseUrl}}/messages/stats
+Content-Type: application/json
+
+###
+
+### Test 5: Test phone number extraction
+POST {{baseUrl}}/phone/extract
+Content-Type: application/json
+
+{
+  "remoteJid": "256703722777@s.whatsapp.net"
+}
+
+###
+
+### === SAMPLE DATA SETUP ===
+### Use these requests to populate the database with sample data for testing
+
+### Sample Message 1: Support Request
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "support_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759160100,
+      "pushName": "John Doe",
+      "broadcast": false,
+      "message": {
+        "conversation": "Hi, I need help with setting up my API integration. The webhook isn't working properly."
+      },
+      "remoteJid": "john.doe@s.whatsapp.net",
+      "id": "SUPPORT_MSG_001"
+    }
+  },
+  "timestamp": 1759160105000
+}
+
+###
+
+### Sample Message 2: Follow-up
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "support_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759160200,
+      "pushName": "John Doe",
+      "broadcast": false,
+      "message": {
+        "conversation": "I'm getting a 404 error when the webhook tries to send data to my endpoint."
+      },
+      "remoteJid": "john.doe@s.whatsapp.net",
+      "id": "SUPPORT_MSG_002"
+    }
+  },
+  "timestamp": 1759160205000
+}
+
+###
+
+### Sample Message 3: Positive Feedback
+POST {{baseUrl}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "feedback_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759160300,
+      "pushName": "Jane Smith",
+      "broadcast": false,
+      "message": {
+        "conversation": "The AI features are working great! I love the conversation analysis. Very helpful for customer support."
+      },
+      "remoteJid": "jane.smith@s.whatsapp.net",
+      "id": "FEEDBACK_MSG_001"
+    }
+  },
+  "timestamp": 1759160305000
+}
+
+###
+
+### Sample Analysis: Support Conversation
+POST {{baseUrl}}/ai/analyze-conversation
+Content-Type: application/json
+
+{
+  "sessionId": "support_session_001",
+  "prompt": "This is a customer support conversation. Analyze the user's issue and suggest a solution. What technical problem are they facing?",
+  "limit": 10
+}
+
+###
+
+### Sample Summarization: Feedback
+POST {{baseUrl}}/ai/summarize
+Content-Type: application/json
+
+{
+  "sessionId": "feedback_session_001",
+  "limit": 10
+}
+
+###
+
+### === CONFIGURATION INFO ===
+###
+### Base URL: http://localhost (default port 80)
+### 
+### Required Environment Variables:
+### - AZURE_OPENAI_API_KEY
+### - AZURE_OPENAI_ENDPOINT  
+### - AZURE_OPENAI_API_VERSION
+### - AZURE_OPENAI_DEPLOYMENT_NAME
+###
+### Database Location: ./libraries/database/whatsapp_messages.db
+### 
+### Before testing:
+### 1. Ensure server is running: npm start
+### 2. Verify database is initialized: npm run bootstrap
+### 3. Check environment variables are set in .env file
+### 4. Confirm Azure OpenAI is configured and accessible
+###
+### Test Order Recommendation:
+### 1. Run basic.http tests first
+### 2. Test webhook.http to verify message processing
+### 3. Test messages.http to verify database queries
+### 4. Test ai.http to verify AI integration
+### 5. Run workflows.http for end-to-end testing
+### 6. Use performance.http for load and edge case testing
+###
+
+###

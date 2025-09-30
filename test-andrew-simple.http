@@ -1,0 +1,36 @@
+### Simple Andrew Test
+### This file provides a minimal test to verify Andrew AI functionality
+
+@baseUrl = http://localhost
+@port = 80
+
+### Test: Send a simple Andrew message and check response
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "simple_andrew_test",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150000,
+      "pushName": "Simple Test User",
+      "remoteJid": "256703722777@s.whatsapp.net",
+      "id": "SIMPLE_ANDREW_001",
+      "message": {
+        "conversation": "Andrew, please say hello!"
+      }
+    }
+  },
+  "timestamp": 1759150005000
+}
+
+###
+
+### Check recent messages to verify storage
+GET {{baseUrl}}:{{port}}/messages/recent?limit=3
+
+###
+
+### Check conversation history for our test number
+GET {{baseUrl}}:{{port}}/messages/contact/256703722777@s.whatsapp.net?limit=5

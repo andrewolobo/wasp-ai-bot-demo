@@ -1,0 +1,22 @@
+# Basic API Tests
+# Test the core functionality and health endpoints
+
+@baseUrl = http://localhost
+
+### Health Check
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+###
+
+### API Status
+GET {{baseUrl}}/
+Content-Type: application/json
+
+###
+
+### Test Invalid Endpoint
+GET {{baseUrl}}/invalid-endpoint
+Content-Type: application/json
+
+###

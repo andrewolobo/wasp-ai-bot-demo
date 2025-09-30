@@ -1,0 +1,321 @@
+### ============================================
+### ANDREW AI ASSISTANT TESTS
+### ============================================
+### Test the automatic AI response feature for messages starting with "Andrew"
+### 
+### This feature:
+### 1. Detects messages starting with "Andrew" (case-insensitive)
+### 2. Retrieves message history for the sender
+### 3. Passes history to Azure OpenAI GPT-4o
+### 4. Sends AI response back to the sender via Wasender API
+###
+### Prerequisites:
+### - Azure OpenAI configured in .env
+### - Wasender API token configured in .env
+### - Database with some message history (optional for testing)
+### ============================================
+
+@baseUrl = http://localhost
+@port = 80
+
+### === ANDREW TRIGGER TESTS ===
+
+### Test 1: Basic Andrew question
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "andrew_basic_test",
+  "data": {
+    "messages": {
+      "key": {
+        "remoteJid": "256703722777@s.whatsapp.net",
+        "fromMe": false,
+        "id": "ANDREW_001"
+      },
+      "messageTimestamp": 1759140000,
+      "pushName": "Test User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Andrew, what's the weather like today?"
+      },
+      "remoteJid": "256703722777@s.whatsapp.net",
+      "id": "ANDREW_001"
+    }
+  },
+  "timestamp": 1759140005000
+}
+
+###
+
+### Test 2: Andrew with lowercase (should still trigger)
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "andrew_lowercase_test",
+  "data": {
+    "messages": {
+      "key": {
+        "remoteJid": "263774108597@s.whatsapp.net",
+        "fromMe": false,
+        "id": "ANDREW_002"
+      },
+      "messageTimestamp": 1759140010,
+      "pushName": "Zimbabwe User",
+      "broadcast": false,
+      "message": {
+        "conversation": "andrew can you help me understand AI?"
+      },
+      "remoteJid": "263774108597@s.whatsapp.net",
+      "id": "ANDREW_002"
+    }
+  },
+  "timestamp": 1759140015000
+}
+
+###
+
+### Test 3: Andrew in extended text message
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "andrew_extended_test",
+  "data": {
+    "messages": {
+      "key": {
+        "remoteJid": "447911123456@s.whatsapp.net",
+        "fromMe": false,
+        "id": "ANDREW_003"
+      },
+      "messageTimestamp": 1759140020,
+      "pushName": "UK User",
+      "broadcast": false,
+      "message": {
+        "extendedTextMessage": {
+          "text": "Andrew, I'm working on a Node.js project and I need some advice about database design. Can you help me choose between MongoDB and PostgreSQL for my use case?"
+        }
+      },
+      "remoteJid": "447911123456@s.whatsapp.net",
+      "id": "ANDREW_003"
+    }
+  },
+  "timestamp": 1759140025000
+}
+
+###
+
+### Test 4: Complex Andrew question with emoji
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "andrew_emoji_test",
+  "data": {
+    "messages": {
+      "key": {
+        "remoteJid": "15551234567@s.whatsapp.net",
+        "fromMe": false,
+        "id": "ANDREW_004"
+      },
+      "messageTimestamp": 1759140030,
+      "pushName": "US User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Andrew 🤖, what's the best programming language for beginners? 👨‍💻"
+      },
+      "remoteJid": "15551234567@s.whatsapp.net",
+      "id": "ANDREW_004"
+    }
+  },
+  "timestamp": 1759140035000
+}
+
+###
+
+### === CONVERSATION CONTEXT TESTS ===
+
+### Test 5: Build conversation history (first message)
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "context_building",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140040,
+      "pushName": "Context User",
+      "remoteJid": "256700000001@s.whatsapp.net",
+      "id": "CONTEXT_001",
+      "message": {
+        "conversation": "Hello, I'm learning about machine learning."
+      }
+    }
+  },
+  "timestamp": 1759140045000
+}
+
+###
+
+### Test 6: Build conversation history (second message)
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "context_building",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140050,
+      "pushName": "Context User",
+      "remoteJid": "256700000001@s.whatsapp.net",
+      "id": "CONTEXT_002",
+      "message": {
+        "conversation": "I'm particularly interested in neural networks."
+      }
+    }
+  },
+  "timestamp": 1759140055000
+}
+
+###
+
+### Test 7: Andrew response with context (should reference previous messages)
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "context_building",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140060,
+      "pushName": "Context User",
+      "remoteJid": "256700000001@s.whatsapp.net",
+      "id": "CONTEXT_003",
+      "message": {
+        "conversation": "Andrew, based on my interests, what should I study first?"
+      }
+    }
+  },
+  "timestamp": 1759140065000
+}
+
+###
+
+### === EDGE CASES ===
+
+### Test 8: Message that contains "Andrew" but doesn't start with it (should NOT trigger)
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "edge_case_test",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140070,
+      "pushName": "Edge Case User",
+      "remoteJid": "919876543210@s.whatsapp.net",
+      "id": "EDGE_001",
+      "message": {
+        "conversation": "I know someone named Andrew who works in tech."
+      }
+    }
+  },
+  "timestamp": 1759140075000
+}
+
+###
+
+### Test 9: Andrew with punctuation
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "punctuation_test",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140080,
+      "pushName": "Punctuation User",
+      "remoteJid": "27123456789@s.whatsapp.net",
+      "id": "PUNCT_001",
+      "message": {
+        "conversation": "Andrew, could you please explain the difference between AI and ML?"
+      }
+    }
+  },
+  "timestamp": 1759140085000
+}
+
+###
+
+### Test 10: Group message with Andrew (should still work)
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "group_test",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140090,
+      "pushName": "Group User",
+      "remoteJid": "256704966899-1625215002@g.us",
+      "id": "GROUP_001",
+      "message": {
+        "conversation": "Andrew, what do you think about this discussion?"
+      }
+    }
+  },
+  "timestamp": 1759140095000
+}
+
+###
+
+### === PERFORMANCE TESTS ===
+
+### Test 11: Long message with Andrew
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "performance_test",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140100,
+      "pushName": "Verbose User",
+      "remoteJid": "44123456789@s.whatsapp.net",
+      "id": "LONG_001",
+      "message": {
+        "conversation": "Andrew, I have a very complex question about artificial intelligence and machine learning. I'm trying to understand the differences between supervised, unsupervised, and reinforcement learning. I've been reading about neural networks, deep learning, and various algorithms like decision trees, random forests, and support vector machines. Could you provide a comprehensive explanation that would help a beginner like me understand these concepts and how they relate to each other? I'm particularly interested in practical applications and which approach would be best for different types of problems."
+      }
+    }
+  },
+  "timestamp": 1759140105000
+}
+
+###
+
+### === VALIDATION TESTS ===
+
+### Test 12: Check database for Andrew conversations
+GET {{baseUrl}}:{{port}}/messages/search?query=Andrew&limit=10
+
+###
+
+### Test 13: Get conversation history for specific contact
+GET {{baseUrl}}:{{port}}/messages/contact/256703722777@s.whatsapp.net?limit=5
+
+###
+
+### Test 14: Get recent Andrew-related messages
+GET {{baseUrl}}:{{port}}/messages/recent?hours=1&limit=10
