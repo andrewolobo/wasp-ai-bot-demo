@@ -1,0 +1,86 @@
+### ============================================
+### HEALTH & SMOKE TESTS
+### ============================================
+### Quick verification tests to ensure the API is running properly
+### Run these first before executing any other test suites
+### 
+### Endpoints Tested:
+### - GET  /health      - Health check endpoint
+### - GET  /            - API status and welcome message
+### 
+### Expected Results:
+### - All endpoints should return 200 OK
+### - Health check should confirm service status
+### - Invalid endpoints should return 404
+### ============================================
+
+@baseUrl = http://localhost
+@port = 80
+
+### === SMOKE TESTS ===
+### Run these first to verify the API is operational
+
+### Test 1: Health Check
+# Verify the API server is running and healthy
+GET {{baseUrl}}:{{port}}/health
+Content-Type: application/json
+
+###
+
+### Test 2: API Status & Welcome Message
+# Get the API welcome message and basic info
+GET {{baseUrl}}:{{port}}/
+Content-Type: application/json
+
+###
+
+### === ERROR HANDLING TESTS ===
+
+### Test 3: Invalid Endpoint (Should Return 404)
+# Verify proper error handling for non-existent routes
+GET {{baseUrl}}:{{port}}/invalid-endpoint
+Content-Type: application/json
+
+###
+
+### Test 4: Invalid HTTP Method (Should Return 404/405)
+# Test unsupported HTTP method on valid endpoint
+DELETE {{baseUrl}}:{{port}}/health
+Content-Type: application/json
+
+###
+
+### === EXPECTED RESPONSES ===
+###
+### Test 1 - Health Check:
+### {
+###   "status": "healthy",
+###   "timestamp": "2025-10-07T12:00:00.000Z",
+###   "uptime": 12345.678
+### }
+###
+### Test 2 - API Status:
+### {
+###   "message": "WhatsApp AI Bot API",
+###   "version": "1.0.0",
+###   "status": "running"
+### }
+###
+### Test 3 - Invalid Endpoint:
+### {
+###   "error": "Not Found",
+###   "status": 404
+### }
+###
+### ============================================
+### TROUBLESHOOTING
+### ============================================
+###
+### If tests fail:
+### 1. Verify server is running: npm start
+### 2. Check port 80 is accessible (may need admin/sudo)
+### 3. Verify no firewall blocking localhost:80
+### 4. Check console for server startup errors
+### 5. Verify all environment variables are set
+###
+### ============================================

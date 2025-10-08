@@ -232,8 +232,12 @@ function formatPhoneNumber(extractedInfo) {
  * @returns {Promise<object>} API response with success status and details
  */
 async function sendWhatsAppMessage(to, text, apiToken = null) {
-    const token = apiToken || process.env.WASENDER_API_TOKEN || '7880f22816319b6c2483f36f377abaea7879fb2418102735f1bb7dbacd1b154c';
+    const token = apiToken || process.env.WASENDER_API_TOKEN;
     const apiUrl = process.env.WASENDER_API_URL || 'https://wasenderapi.com/api/send-message';
+
+    if (!token) {
+        throw new Error('Wasender API token is required. Please set WASENDER_API_TOKEN in your environment variables.');
+    }
 
     if (!to || !text) {
         throw new Error('Phone number and message text are required');
@@ -301,6 +305,16 @@ async function initializeDatabase() {
         // Validate Azure OpenAI configuration
         azureOpenAI.validateConfiguration();
         console.log('✅ Azure OpenAI configuration validated');
+
+        // Validate Wasender API configuration
+        if (!process.env.WASENDER_API_TOKEN) {
+            throw new Error('WASENDER_API_TOKEN environment variable is required');
+        }
+        if (!process.env.WASENDER_API_URL) {
+            console.warn('⚠️  WASENDER_API_URL not set, using default: https://wasenderapi.com/api/send-message');
+        }
+        console.log('✅ Wasender API configuration validated');
+
     } catch (error) {
         console.error('❌ Initialization failed:', error.message);
         process.exit(1);
@@ -330,7 +344,7 @@ app.get('/health', (req, res) => {
 app.post('/webhook', async (req, res) => {
     try {
         const webhookData = req.body;
-        console.log('📨 Webhook received:', JSON.stringify(webhookData, null, 2));
+        //console.log('📨 Webhook received:', JSON.stringify(webhookData, null, 2));
 
         // Validate webhook data structure
         if (!webhookData.event || !webhookData.sessionId || !webhookData.data) {
@@ -386,11 +400,20 @@ app.post('/webhook', async (req, res) => {
                 const result = await db.insertMessage(restructuredData);
                 console.log('✅ Message saved to database:', result);
 
-                // Check if message starts with "Andrew" for AI response
+                // Check if user is AI-enabled in database
                 let aiResponse = null;
-                if (messageText.toLowerCase().startsWith('andrew')) {
+                const isAIEnabled = await db.isAIEnabled(originalData.remoteJid);
+
+                if (isAIEnabled) {
                     try {
-                        console.log('🤖 Andrew message detected, processing AI response...');
+                        console.log('🤖 AI-enabled user detected, processing AI response...');
+
+                        // Update last interaction time
+                        await db.updateAIUserInteraction(originalData.remoteJid);
+
+                        // Get AI user details (including notes)
+                        const aiUserDetails = await db.getAIUser(originalData.remoteJid);
+                        console.log('👤 AI user details retrieved:', aiUserDetails?.name || 'Unknown');
 
                         // Get message history for this sender
                         const senderHistory = await db.getMessagesByContact(originalData.remoteJid, 20);
@@ -402,15 +425,32 @@ app.post('/webhook', async (req, res) => {
                             return `[${timestamp}] ${msg.pushName || 'User'}: ${msg.message}`;
                         }).join('\n');
 
-                        // Create context-aware prompt for the LLM
-                        const aiPrompt = `You are Andrew, a helpful AI assistant responding to WhatsApp messages. Here is the recent conversation history with this contact:
+                        // Build user context section with notes if available
+                        let userContext = '';
+                        if (aiUserDetails) {
+                            userContext = '\nUSER CONTEXT:\n';
+                            if (aiUserDetails.name) {
+                                //userContext += `- Name: ${aiUserDetails.name}\n`;
+                            }
+                            if (aiUserDetails.phoneNumber) {
+                                //userContext += `- Phone: ${aiUserDetails.phoneNumber}\n`;
+                            }
+                            if (aiUserDetails.notes) {
+                                userContext += `- Notes: ${aiUserDetails.notes}\n`;
+                            }
+                            userContext += '\n';
+                        }
 
+                        // Create context-aware prompt for the LLM
+                        const aiPrompt = `You are Joshua(Andrew's AI Assistant). As a helpful AI assistant, you are purposed with responding to WhatsApp messages. Here is the some context on contact and recent conversation history them:
+CONTEXT:
+                        ${userContext}
 CONVERSATION HISTORY:
 ${conversationHistory}
 
 The user just sent: "${messageText}"
 
-Please respond as Andrew in a helpful, friendly, and contextually appropriate way. Keep your response concise and conversational, suitable for WhatsApp messaging.`;
+Please respond as Joshua in a helpful, friendly, and contextually appropriate way. Keep your response concise and conversational, suitable for WhatsApp messaging.`;
 
                         // Get AI response
                         const aiResult = await azureOpenAI.getChatCompletion(aiPrompt, {
@@ -745,6 +785,223 @@ app.post('/ai/summarize', async (req, res) => {
         res.status(500).json({
             status: 'error',
             message: 'Failed to summarize messages',
+            error: error.message
+        });
+    }
+});
+
+// ==========================================
+// AI-ENABLED USERS MANAGEMENT ENDPOINTS
+// ==========================================
+
+// Add a user to AI-enabled list
+app.post('/ai/users/add', async (req, res) => {
+    try {
+        const { remoteJid, phoneNumber, name, notes } = req.body;
+
+        if (!remoteJid) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'remoteJid is required',
+                example: {
+                    remoteJid: "256703722777@s.whatsapp.net",
+                    phoneNumber: "+256703722777",
+                    name: "John Doe",
+                    notes: "VIP customer"
+                }
+            });
+        }
+
+        const result = await db.addAIUser(remoteJid, phoneNumber, name, notes);
+
+        res.json({
+            status: 'success',
+            message: 'User added to AI-enabled list',
+            data: result
+        });
+
+    } catch (error) {
+        console.error('❌ Error adding AI user:', error.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to add AI user',
+            error: error.message
+        });
+    }
+});
+
+// Remove a user from AI-enabled list (soft delete)
+app.delete('/ai/users/remove', async (req, res) => {
+    try {
+        const { remoteJid } = req.body;
+
+        if (!remoteJid) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'remoteJid is required'
+            });
+        }
+
+        const removed = await db.removeAIUser(remoteJid);
+
+        if (removed) {
+            res.json({
+                status: 'success',
+                message: 'User removed from AI-enabled list',
+                remoteJid: remoteJid
+            });
+        } else {
+            res.status(404).json({
+                status: 'error',
+                message: 'User not found'
+            });
+        }
+
+    } catch (error) {
+        console.error('❌ Error removing AI user:', error.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to remove AI user',
+            error: error.message
+        });
+    }
+});
+
+// Permanently delete a user from AI-enabled list
+app.delete('/ai/users/delete', async (req, res) => {
+    try {
+        const { remoteJid } = req.body;
+
+        if (!remoteJid) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'remoteJid is required'
+            });
+        }
+
+        const deleted = await db.deleteAIUser(remoteJid);
+
+        if (deleted) {
+            res.json({
+                status: 'success',
+                message: 'User permanently deleted from AI-enabled list',
+                remoteJid: remoteJid
+            });
+        } else {
+            res.status(404).json({
+                status: 'error',
+                message: 'User not found'
+            });
+        }
+
+    } catch (error) {
+        console.error('❌ Error deleting AI user:', error.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to delete AI user',
+            error: error.message
+        });
+    }
+});
+
+// Toggle AI-enabled status for a user
+app.patch('/ai/users/toggle', async (req, res) => {
+    try {
+        const { remoteJid } = req.body;
+
+        if (!remoteJid) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'remoteJid is required'
+            });
+        }
+
+        const result = await db.toggleAIUser(remoteJid);
+
+        res.json({
+            status: 'success',
+            message: `User AI status toggled to ${result.enabled ? 'enabled' : 'disabled'}`,
+            data: result
+        });
+
+    } catch (error) {
+        console.error('❌ Error toggling AI user:', error.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to toggle AI user status',
+            error: error.message
+        });
+    }
+});
+
+// Get all AI-enabled users
+app.get('/ai/users/list', async (req, res) => {
+    try {
+        const includeDisabled = req.query.includeDisabled === 'true';
+        const users = await db.getAIUsers(includeDisabled);
+
+        res.json({
+            status: 'success',
+            count: users.length,
+            includeDisabled: includeDisabled,
+            users: users
+        });
+
+    } catch (error) {
+        console.error('❌ Error listing AI users:', error.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to list AI users',
+            error: error.message
+        });
+    }
+});
+
+// Get details of a specific AI-enabled user
+app.get('/ai/users/:remoteJid', async (req, res) => {
+    try {
+        const remoteJid = decodeURIComponent(req.params.remoteJid);
+        const user = await db.getAIUser(remoteJid);
+
+        if (user) {
+            res.json({
+                status: 'success',
+                data: user
+            });
+        } else {
+            res.status(404).json({
+                status: 'error',
+                message: 'User not found in AI-enabled list'
+            });
+        }
+
+    } catch (error) {
+        console.error('❌ Error getting AI user:', error.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to get AI user',
+            error: error.message
+        });
+    }
+});
+
+// Check if a user is AI-enabled
+app.get('/ai/users/check/:remoteJid', async (req, res) => {
+    try {
+        const remoteJid = decodeURIComponent(req.params.remoteJid);
+        const isEnabled = await db.isAIEnabled(remoteJid);
+
+        res.json({
+            status: 'success',
+            remoteJid: remoteJid,
+            isAIEnabled: isEnabled
+        });
+
+    } catch (error) {
+        console.error('❌ Error checking AI status:', error.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to check AI status',
             error: error.message
         });
     }

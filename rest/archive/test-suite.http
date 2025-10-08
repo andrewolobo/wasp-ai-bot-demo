@@ -1,5 +1,32 @@
 # WhatsApp AI Bot API - Complete Test Suite
-# Comprehensive testing for all API endpoints
+# Comprehensive testing for### 7. AI USERS MANAGEMENT TESTS (ai-users.http)
+###    - Add/remove users from AI-enabled list
+###    - Toggle AI status for specific users
+###    - List and query AI-enabled users
+###    - Check AI status for any user
+###    - Integration with webhook AI responses
+###    - Bulk operations and edge cases
+###
+### 8. ANDREW AI TESTS (andrew.http)
+###    - Automatic AI responses for AI-enabled users
+###    - Conversation context and history retrieval
+###    - AI response generation using Azure OpenAI GPT-4o
+###    - Automatic message sending back to users
+###    - Edge cases and performance testing
+###    - Integration of webhook, database, AI, and messaging features
+###. WORKFLOW TESTS (workflows.http)
+###    - End-to-end scenarios from webhook to AI analysis
+###    - Multi-user conversation flows
+###    - Newsletter analysis workflows
+###    - Error handling workflows
+###
+### 11. PERFORMANCE TESTS (performance.http)
+###    - Rapid webhook processing
+###    - Large query results
+###    - Edge cases (empty messages, special characters)
+###    - Load testing for AI endpoints
+###    - Database stress testing
+###nts
 # This file provides an overview and quick access to all test categories
 
 @baseUrl = http://localhost
@@ -58,21 +85,27 @@ Content-Type: application/json
 ###    - Integration with AI endpoints for automated responses
 ###    - Performance testing with bulk sends
 ###
-### 7. ANDREW AI TESTS (andrew.http)
-###    - Automatic AI responses for messages starting with "Andrew"
+### 8. ANDREW AI TESTS (andrew.http)
+###    - Automatic AI responses for AI-enabled users (database-driven)
 ###    - Conversation context and history retrieval
 ###    - AI response generation using Azure OpenAI GPT-4o
 ###    - Automatic message sending back to users
 ###    - Edge cases and performance testing
 ###    - Integration of webhook, database, AI, and messaging features
 ###
-### 8. WORKFLOW TESTS (workflows.http)
+### 9. ENVIRONMENT VALIDATION TESTS (env-validation.http)
+###    - Test error handling for missing environment variables
+###    - Validate proper configuration validation at startup
+###    - Test custom vs environment token usage
+###    - Verify security best practices implementation
+###
+### 10. WORKFLOW TESTS (workflows.http)
 ###    - End-to-end scenarios from webhook to AI analysis
 ###    - Multi-user conversation flows
 ###    - Newsletter analysis workflows
 ###    - Error handling workflows
 ###
-### 9. PERFORMANCE TESTS (performance.http)
+### 11. PERFORMANCE TESTS (performance.http)
 ###    - Rapid webhook processing
 ###    - Large query results
 ###    - Edge cases (empty messages, special characters)

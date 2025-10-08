@@ -1,0 +1,90 @@
+### ============================================
+### ENVIRONMENT VARIABLE VALIDATION TESTS
+### ============================================
+### Test error handling when required environment variables are missing
+### 
+### These tests help verify that the application properly validates
+### required configuration and throws appropriate errors when secrets are missing.
+### ============================================
+
+@baseUrl = http://localhost
+@port = 80
+
+### === TEST WASENDER API TOKEN VALIDATION ===
+
+### Test 1: Send message without providing custom token (should use .env)
+POST {{baseUrl}}:{{port}}/message/send
+Content-Type: application/json
+
+{
+    "to": "+1234567890",
+    "text": "This should use the token from .env file"
+}
+
+###
+
+### Test 2: Send message with empty/invalid custom token (should fail gracefully)
+POST {{baseUrl}}:{{port}}/message/send
+Content-Type: application/json
+
+{
+    "to": "+1234567890",
+    "text": "Testing with invalid token",
+    "apiToken": ""
+}
+
+###
+
+### Test 3: Send message with null custom token (should use .env)
+POST {{baseUrl}}:{{port}}/message/send
+Content-Type: application/json
+
+{
+    "to": "+1234567890",
+    "text": "Testing with null token",
+    "apiToken": null
+}
+
+###
+
+### === TEST VALIDATION RESPONSES ===
+
+### Test 4: Health check to verify server initialization passed
+GET {{baseUrl}}:{{port}}/health
+
+###
+
+### Test 5: Basic webhook test to ensure core functionality works
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "env_validation_test",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759160000,
+      "pushName": "Env Test User",
+      "remoteJid": "256703722777@s.whatsapp.net",
+      "id": "ENV_TEST_001",
+      "message": {
+        "conversation": "Testing environment validation"
+      }
+    }
+  },
+  "timestamp": 1759160005000
+}
+
+###
+
+### === EXPECTED BEHAVIORS ===
+###
+### Test 1: Should succeed if WASENDER_API_TOKEN is set in .env
+### Test 2: Should fail with "Wasender API token is required" error
+### Test 3: Should succeed using .env token (null is treated as not provided)
+### Test 4: Should return 200 OK if all env vars are properly configured
+### Test 5: Should work normally for webhook processing
+###
+### If server fails to start: Check that WASENDER_API_TOKEN is set in .env
+### If server starts but tests fail: Token validation is working correctly
+### ============================================

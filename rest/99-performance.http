@@ -1,0 +1,663 @@
+### ============================================
+### PERFORMANCE, EDGE CASES & ADVANCED TESTS
+### ============================================
+### Comprehensive testing for performance, edge cases, validation,
+### phone number extraction, and system limits
+### 
+### Test Categories:
+### 1. Performance & Load Testing
+### 2. Edge Cases & Error Handling
+### 3. Phone Number Extraction & Validation
+### 4. Environment Variable Validation
+### 5. Database Stress Testing
+### 6. AI Service Limits
+###
+### Prerequisites:
+### - All basic tests passing (00-health through 06-workflows)
+### - Database with substantial test data
+### - Azure OpenAI quota available
+### - System resources monitored
+###
+### Warning: Some tests may consume significant resources
+### Run during non-peak hours for production systems
+### ============================================
+
+@baseUrl = http://localhost
+@port = 80
+
+### === PERFORMANCE TESTS ===
+
+### Test 1.1: Rapid Webhook Processing #1
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "perf_test_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150000,
+      "pushName": "Speed Test User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Performance test message #1"
+      },
+      "remoteJid": "speed_test@s.whatsapp.net",
+      "id": "PERF_MSG_001"
+    }
+  },
+  "timestamp": 1759150005000
+}
+
+###
+
+### Test 1.2: Rapid Webhook Processing #2
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "perf_test_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150010,
+      "pushName": "Speed Test User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Performance test message #2"
+      },
+      "remoteJid": "speed_test@s.whatsapp.net",
+      "id": "PERF_MSG_002"
+    }
+  },
+  "timestamp": 1759150015000
+}
+
+###
+
+### Test 1.3: Rapid Webhook Processing #3
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "perf_test_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150020,
+      "pushName": "Speed Test User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Performance test message #3"
+      },
+      "remoteJid": "speed_test@s.whatsapp.net",
+      "id": "PERF_MSG_003"
+    }
+  },
+  "timestamp": 1759150025000
+}
+
+###
+
+### Test 1.4: Large Query Results (1000 records)
+GET {{baseUrl}}:{{port}}/messages/recent?hours=168&limit=1000
+Content-Type: application/json
+
+###
+
+### Test 1.5: Complex Search Query
+GET {{baseUrl}}:{{port}}/messages/search?q=test%20message%20performance&limit=100
+Content-Type: application/json
+
+###
+
+### Test 1.6: Database Statistics (Full Scan)
+GET {{baseUrl}}:{{port}}/messages/stats
+Content-Type: application/json
+
+###
+
+### Test 1.7: Multiple AI Requests (Load Test #1)
+POST {{baseUrl}}:{{port}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Quick test message 1",
+  "options": {
+    "maxTokens": 50
+  }
+}
+
+###
+
+### Test 1.8: Multiple AI Requests (Load Test #2)
+POST {{baseUrl}}:{{port}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Quick test message 2",
+  "options": {
+    "maxTokens": 50
+  }
+}
+
+###
+
+### Test 1.9: Multiple AI Requests (Load Test #3)
+POST {{baseUrl}}:{{port}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Quick test message 3",
+  "options": {
+    "maxTokens": 50
+  }
+}
+
+###
+
+### Test 1.10: Large AI Context Window
+POST {{baseUrl}}:{{port}}/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    {"role": "system", "content": "You are a helpful assistant with detailed knowledge about API development, database optimization, webhook processing, message queuing, real-time communication, scalability patterns, microservices architecture, cloud deployment strategies, monitoring and logging best practices, security implementations, and performance optimization techniques."},
+    {"role": "user", "content": "Tell me about webhook scalability patterns."},
+    {"role": "assistant", "content": "Webhook scalability involves several key patterns: 1) Queue-based processing to handle spikes, 2) Horizontal scaling with load balancers, 3) Retry mechanisms with exponential backoff, 4) Circuit breakers for fault tolerance, 5) Rate limiting to prevent overload, 6) Monitoring and alerting for proactive management."},
+    {"role": "user", "content": "How do you implement retry mechanisms effectively?"},
+    {"role": "assistant", "content": "Effective retry mechanisms use exponential backoff (starting with 1s, then 2s, 4s, 8s), jitter to prevent thundering herd, maximum retry limits (usually 3-5), dead letter queues for failed messages, and different strategies for different error types (immediate retry for 5xx, no retry for 4xx)."},
+    {"role": "user", "content": "What about database optimization for high-volume message processing?"}
+  ],
+  "options": {
+    "temperature": 0.3,
+    "maxTokens": 800
+  }
+}
+
+###
+
+### === EDGE CASES & ERROR HANDLING ===
+
+### Test 2.1: Empty Message Content
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "edge_case_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150100,
+      "pushName": "Empty Message User",
+      "broadcast": false,
+      "message": {
+        "conversation": ""
+      },
+      "remoteJid": "empty_msg@s.whatsapp.net",
+      "id": "EMPTY_MSG_001"
+    }
+  },
+  "timestamp": 1759150105000
+}
+
+###
+
+### Test 2.2: Special Characters & Unicode
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "edge_case_session_002",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150200,
+      "pushName": "Special Chars User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Testing special characters: !@#$%^&*()_+-=[]{}|;':\",./<>? áéíóú ñüç 中文 日本語 한국어 العربية 🚀🎉😊"
+      },
+      "remoteJid": "special_chars@s.whatsapp.net",
+      "id": "SPECIAL_MSG_001"
+    }
+  },
+  "timestamp": 1759150205000
+}
+
+###
+
+### Test 2.3: Very Long Session ID
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "this_is_a_very_long_session_id_that_might_cause_issues_if_not_handled_properly_in_the_database_or_api_endpoints_1234567890_abcdefghijklmnopqrstuvwxyz",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150300,
+      "pushName": "Long Session User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Testing with very long session ID"
+      },
+      "remoteJid": "long_session@s.whatsapp.net",
+      "id": "LONG_SESSION_MSG_001"
+    }
+  },
+  "timestamp": 1759150305000
+}
+
+###
+
+### Test 2.4: Null/Undefined Fields
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "null_test_session",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150400,
+      "pushName": null,
+      "broadcast": false,
+      "message": {
+        "conversation": "Testing with null pushName"
+      },
+      "remoteJid": "null_test@s.whatsapp.net",
+      "id": "NULL_MSG_001"
+    }
+  },
+  "timestamp": 1759150405000
+}
+
+###
+
+### Test 2.5: Extremely Long Message (1000+ characters)
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "long_message_session",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150500,
+      "pushName": "Verbose User",
+      "broadcast": false,
+      "message": {
+        "conversation": "This is an extremely long message that tests the system's ability to handle large text inputs. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem."
+      },
+      "remoteJid": "verbose@s.whatsapp.net",
+      "id": "LONG_TEXT_001"
+    }
+  },
+  "timestamp": 1759150505000
+}
+
+###
+
+### Test 2.6: SQL Injection Attempt (Security Test)
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "security_test_session",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150600,
+      "pushName": "Security Test",
+      "broadcast": false,
+      "message": {
+        "conversation": "'; DROP TABLE whatsapp_messages; --"
+      },
+      "remoteJid": "security@s.whatsapp.net",
+      "id": "SECURITY_001"
+    }
+  },
+  "timestamp": 1759150605000
+}
+
+###
+
+### Test 2.7: XSS Attempt (Security Test)
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "xss_test_session",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150700,
+      "pushName": "XSS Test",
+      "broadcast": false,
+      "message": {
+        "conversation": "<script>alert('XSS')</script>"
+      },
+      "remoteJid": "xss@s.whatsapp.net",
+      "id": "XSS_001"
+    }
+  },
+  "timestamp": 1759150705000
+}
+
+###
+
+### === PHONE NUMBER EXTRACTION TESTS ===
+
+### Test 3.1: Standard Individual WhatsApp User (Uganda)
+# Expected: Extract phone number successfully
+GET {{baseUrl}}:{{port}}/messages/contact/256703722777@s.whatsapp.net?limit=1
+
+###
+
+### Test 3.2: WhatsApp Group (Should handle gracefully)
+# Expected: Null phone number for groups
+GET {{baseUrl}}:{{port}}/messages/contact/256704966899-1625215002@g.us?limit=1
+
+###
+
+### Test 3.3: Newsletter Channel (Should handle gracefully)
+# Expected: Null phone number for newsletters
+GET {{baseUrl}}:{{port}}/messages/contact/120363169319669622@newsletter?limit=1
+
+###
+
+### Test 3.4: US Phone Number
+GET {{baseUrl}}:{{port}}/messages/contact/15551234567@s.whatsapp.net?limit=1
+
+###
+
+### Test 3.5: UK Phone Number
+GET {{baseUrl}}:{{port}}/messages/contact/447911123456@s.whatsapp.net?limit=1
+
+###
+
+### Test 3.6: India Phone Number
+GET {{baseUrl}}:{{port}}/messages/contact/919876543210@s.whatsapp.net?limit=1
+
+###
+
+### Test 3.7: Brazil Phone Number
+GET {{baseUrl}}:{{port}}/messages/contact/5511987654321@s.whatsapp.net?limit=1
+
+###
+
+### Test 3.8: Nigeria Phone Number
+GET {{baseUrl}}:{{port}}/messages/contact/2348012345678@s.whatsapp.net?limit=1
+
+###
+
+### Test 3.9: Germany Phone Number
+GET {{baseUrl}}:{{port}}/messages/contact/493012345678@s.whatsapp.net?limit=1
+
+###
+
+### Test 3.10: Zimbabwe Phone Number
+GET {{baseUrl}}:{{port}}/messages/contact/263774108597@s.whatsapp.net?limit=1
+
+###
+
+### Test 3.11: Very Long Phone Number (Edge Case)
+GET {{baseUrl}}:{{port}}/messages/contact/1234567890123456789@s.whatsapp.net?limit=1
+
+###
+
+### Test 3.12: Very Short Phone Number (Edge Case)
+GET {{baseUrl}}:{{port}}/messages/contact/123@s.whatsapp.net?limit=1
+
+###
+
+### === ENVIRONMENT VARIABLE VALIDATION ===
+
+### Test 4.1: Health Check (Validates env vars loaded)
+# Should succeed if all required env vars are set
+GET {{baseUrl}}:{{port}}/health
+
+###
+
+### Test 4.2: AI Chat (Tests Azure OpenAI configuration)
+# Validates AZURE_OPENAI_* environment variables
+POST {{baseUrl}}:{{port}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Test environment variable validation"
+}
+
+###
+
+### Test 4.3: Send Message (Tests Wasender API token)
+# Validates WASENDER_API_TOKEN environment variable
+# Note: This may fail if token is invalid or expired
+POST {{baseUrl}}:{{port}}/send-message
+Content-Type: application/json
+
+{
+  "sessionId": "env_validation_test",
+  "remoteJid": "256703722777@s.whatsapp.net",
+  "message": "Environment validation test message"
+}
+
+###
+
+### === DATABASE STRESS TESTS ===
+
+### Test 5.1: Query All Messages (No Limit)
+# Warning: May return large result set
+GET {{baseUrl}}:{{port}}/messages/recent?hours=8760&limit=10000
+Content-Type: application/json
+
+###
+
+### Test 5.2: Search with Common Term
+GET {{baseUrl}}:{{port}}/messages/search?q=test&limit=500
+Content-Type: application/json
+
+###
+
+### Test 5.3: Date Range Query (Full Year)
+GET {{baseUrl}}:{{port}}/messages/date-range?startDate=2024-01-01&endDate=2025-12-31&limit=5000
+Content-Type: application/json
+
+###
+
+### Test 5.4: Statistics Aggregation
+GET {{baseUrl}}:{{port}}/messages/stats
+Content-Type: application/json
+
+###
+
+### Test 5.5: Multiple Concurrent Session Queries
+GET {{baseUrl}}:{{port}}/messages/session/test_session_123456789?limit=100
+Content-Type: application/json
+
+###
+
+GET {{baseUrl}}:{{port}}/messages/session/workflow_test_session_001?limit=100
+Content-Type: application/json
+
+###
+
+GET {{baseUrl}}:{{port}}/messages/session/multi_user_session_001?limit=100
+Content-Type: application/json
+
+###
+
+### === AI SERVICE LIMITS ===
+
+### Test 6.1: Maximum Token Request
+# Test AI with maximum allowed tokens
+POST {{baseUrl}}:{{port}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Explain the complete history of artificial intelligence from the 1950s to today in great detail",
+  "options": {
+    "temperature": 0.7,
+    "maxTokens": 4000
+  }
+}
+
+###
+
+### Test 6.2: High Temperature (Creative)
+POST {{baseUrl}}:{{port}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "Write a creative story about a robot learning to understand emotions",
+  "options": {
+    "temperature": 1.0,
+    "maxTokens": 500
+  }
+}
+
+###
+
+### Test 6.3: Low Temperature (Deterministic)
+POST {{baseUrl}}:{{port}}/ai/chat
+Content-Type: application/json
+
+{
+  "message": "What is 2 + 2?",
+  "options": {
+    "temperature": 0.0,
+    "maxTokens": 10
+  }
+}
+
+###
+
+### Test 6.4: Analyze Large Conversation History
+POST {{baseUrl}}:{{port}}/ai/analyze-conversation
+Content-Type: application/json
+
+{
+  "sessionId": "test_session_123456789",
+  "prompt": "Provide a comprehensive analysis of all conversations in this session, including sentiment, topics, user concerns, and recommendations",
+  "limit": 100
+}
+
+###
+
+### Test 6.5: Summarize Large Dataset
+POST {{baseUrl}}:{{port}}/ai/summarize
+Content-Type: application/json
+
+{
+  "sessionId": "test_session_123456789",
+  "limit": 100
+}
+
+###
+
+### === AI USER MANAGEMENT EDGE CASES ===
+
+### Test 7.1: Add User with Extremely Long Name
+POST {{baseUrl}}:{{port}}/ai-users/add
+Content-Type: application/json
+
+{
+  "remoteJid": "long_name_test@s.whatsapp.net",
+  "name": "ThisIsAnExtremelyLongUserNameThatTestsTheDatabaseFieldLengthLimitsAndValidationMechanismsOfTheAIUserManagementSystemToEnsureProperHandlingOfEdgeCases",
+  "notes": "Testing very long names"
+}
+
+###
+
+### Test 7.2: Add User with Special Characters in Name
+POST {{baseUrl}}:{{port}}/ai-users/add
+Content-Type: application/json
+
+{
+  "remoteJid": "special_name_test@s.whatsapp.net",
+  "name": "Test User 🤖 @#$% <script>alert('test')</script>",
+  "notes": "Testing special characters"
+}
+
+###
+
+### Test 7.3: Query All AI Users (Pagination Test)
+GET {{baseUrl}}:{{port}}/ai-users?limit=1000
+
+###
+
+### Test 7.4: Toggle User Status Rapidly
+PUT {{baseUrl}}:{{port}}/ai-users/long_name_test@s.whatsapp.net/toggle
+
+###
+
+PUT {{baseUrl}}:{{port}}/ai-users/long_name_test@s.whatsapp.net/toggle
+
+###
+
+PUT {{baseUrl}}:{{port}}/ai-users/long_name_test@s.whatsapp.net/toggle
+
+###
+
+### === CLEANUP TEST DATA ===
+
+### Cleanup 7.1: Remove long name test user
+DELETE {{baseUrl}}:{{port}}/ai-users/long_name_test@s.whatsapp.net/delete
+
+###
+
+### Cleanup 7.2: Remove special name test user
+DELETE {{baseUrl}}:{{port}}/ai-users/special_name_test@s.whatsapp.net/delete
+
+###
+
+### ============================================
+### EXPECTED RESULTS & SUCCESS CRITERIA
+### ============================================
+###
+### Performance Tests:
+### ✅ Rapid webhooks process without data loss
+### ✅ Large queries complete in reasonable time
+### ✅ Multiple AI requests handled concurrently
+### ✅ System remains responsive under load
+###
+### Edge Cases:
+### ✅ Empty/null values handled gracefully
+### ✅ Special characters stored correctly
+### ✅ Long strings don't cause crashes
+### ✅ Security attacks prevented (SQL injection, XSS)
+###
+### Phone Extraction:
+### ✅ International numbers parsed correctly
+### ✅ Groups/newsletters return null gracefully
+### ✅ Edge cases (very long/short) handled
+###
+### Environment Validation:
+### ✅ Missing env vars caught at startup
+### ✅ API calls fail gracefully with clear errors
+###
+### Database Stress:
+### ✅ Large result sets paginated correctly
+### ✅ Complex queries execute without timeout
+### ✅ Concurrent access handled properly
+###
+### AI Service Limits:
+### ✅ Token limits respected
+### ✅ Rate limits handled gracefully
+### ✅ Large context processed successfully
+###
+### ============================================
+### MONITORING CHECKLIST
+### ============================================
+###
+### During test execution, monitor:
+### □ Server CPU usage
+### □ Memory consumption
+### □ Database file size
+### □ Response times
+### □ Azure OpenAI token usage
+### □ Error logs
+### □ Network bandwidth
+###
+### ============================================

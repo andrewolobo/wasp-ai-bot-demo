@@ -57,6 +57,51 @@ BEGIN
     WHERE id = NEW.id;
 END;
 
+-- Create table for AI-enabled users
+-- This table stores users who are allowed to receive AI responses
+CREATE TABLE IF NOT EXISTS ai_enabled_users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    remoteJid TEXT NOT NULL UNIQUE,
+    phoneNumber TEXT,
+    name TEXT,
+    enabled BOOLEAN DEFAULT TRUE,
+    notes TEXT,
+    added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_interaction DATETIME
+);
+
+-- Create indexes for ai_enabled_users table
+CREATE INDEX IF NOT EXISTS idx_ai_remoteJid ON ai_enabled_users(remoteJid);
+CREATE INDEX IF NOT EXISTS idx_ai_enabled ON ai_enabled_users(enabled);
+CREATE INDEX IF NOT EXISTS idx_ai_phoneNumber ON ai_enabled_users(phoneNumber);
+
+-- Create trigger to update the updated_at timestamp for ai_enabled_users
+CREATE TRIGGER IF NOT EXISTS update_ai_users_timestamp 
+    AFTER UPDATE ON ai_enabled_users
+    FOR EACH ROW
+BEGIN
+    UPDATE ai_enabled_users 
+    SET updated_at = CURRENT_TIMESTAMP 
+    WHERE id = NEW.id;
+END;
+
+-- Create a view for enabled AI users
+CREATE VIEW IF NOT EXISTS ai_enabled_users_view AS
+SELECT 
+    id,
+    remoteJid,
+    phoneNumber,
+    name,
+    enabled,
+    notes,
+    datetime(added_at) as added_at,
+    datetime(updated_at) as updated_at,
+    datetime(last_interaction) as last_interaction
+FROM ai_enabled_users
+WHERE enabled = TRUE
+ORDER BY last_interaction DESC;
+
 -- Sample insert statement (commented out)
 /*
 INSERT INTO whatsapp_messages (
@@ -78,4 +123,10 @@ INSERT INTO whatsapp_messages (
     '3F28D26D4A56A6EB2762',
     FALSE
 );
+*/
+
+-- Sample AI-enabled user insert (commented out)
+/*
+INSERT INTO ai_enabled_users (remoteJid, phoneNumber, name, notes)
+VALUES ('256703722777@s.whatsapp.net', '+256703722777', 'Test User', 'Testing AI responses');
 */

@@ -27,14 +27,14 @@ Content-Type: application/json
     "text": "Hello from API! This is a test message."
 }
 
-### Test 2: Send message with custom API token
+### Test 2: Send message with custom API token (use your actual token)
 POST {{baseUrl}}:{{port}}/message/send
 Content-Type: application/json
 
 {
     "to": "+256703722777",
     "text": "Testing with Uganda number 🇺🇬",
-    "apiToken": "7880f22816319b6c2483f36f377abaea7879fb2418102735f1bb7dbacd1b154c"
+    "apiToken": "your_custom_token_here"
 }
 
 ### Test 3: Send message with emoji and special characters
@@ -69,7 +69,7 @@ Content-Type: application/json
     ]
 }
 
-### Test 5: Bulk send with custom API token
+### Test 5: Bulk send with custom API token (use your actual token)
 POST {{baseUrl}}:{{port}}/message/send-bulk
 Content-Type: application/json
 
@@ -84,7 +84,7 @@ Content-Type: application/json
             "text": "US number test 🇺🇸"
         }
     ],
-    "apiToken": "7880f22816319b6c2483f36f377abaea7879fb2418102735f1bb7dbacd1b154c"
+    "apiToken": "your_custom_token_here"
 }
 
 ### === ERROR HANDLING TESTS ===

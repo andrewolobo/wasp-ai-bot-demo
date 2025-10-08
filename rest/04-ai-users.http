@@ -1,0 +1,398 @@
+### ============================================
+### AI-ENABLED USERS MANAGEMENT TESTS
+### ============================================
+### Test the AI-enabled users management endpoints
+### 
+### This feature allows you to manage which WhatsApp users
+### receive automatic AI responses in your bot.
+### 
+### Endpoints:
+### - POST   /ai/users/add       - Add user to AI-enabled list
+### - DELETE /ai/users/remove    - Disable AI for user (soft delete)
+### - DELETE /ai/users/delete    - Permanently delete user
+### - PATCH  /ai/users/toggle    - Toggle AI status for user
+### - GET    /ai/users/list      - List all AI-enabled users
+### - GET    /ai/users/:jid      - Get specific user details
+### - GET    /ai/users/check/:jid - Check if user is AI-enabled
+### ============================================
+
+@baseUrl = http://localhost
+@port = 80
+
+### === ADD USERS TO AI-ENABLED LIST ===
+
+### Test 1: Add a user with full details
+POST {{baseUrl}}:{{port}}/ai/users/add
+Content-Type: application/json
+
+{
+    "remoteJid": "256703722777@s.whatsapp.net",
+    "phoneNumber": "+256703722777",
+    "name": "Hilda",
+    "notes": "Cute bubbly Girl. Girlfriend. Treat her well."
+}
+
+###
+
+### Test 2: Add a user with minimal information (only remoteJid required)
+POST {{baseUrl}}:{{port}}/ai/users/add
+Content-Type: application/json
+
+{
+    "remoteJid": "263774108597@s.whatsapp.net"
+}
+
+###
+
+### Test 3: Add a user with phone number and name
+POST {{baseUrl}}:{{port}}/ai/users/add
+Content-Type: application/json
+
+{
+    "remoteJid": "447911123456@s.whatsapp.net",
+    "phoneNumber": "+447911123456",
+    "name": "UK Test User"
+}
+
+###
+
+### Test 4: Add a user from a different country (US)
+POST {{baseUrl}}:{{port}}/ai/users/add
+Content-Type: application/json
+
+{
+    "remoteJid": "15551234567@s.whatsapp.net",
+    "phoneNumber": "+15551234567",
+    "name": "US Test User",
+    "notes": "Testing from United States"
+}
+
+###
+
+### Test 5: Add a group chat to AI-enabled list
+POST {{baseUrl}}:{{port}}/ai/users/add
+Content-Type: application/json
+
+{
+    "remoteJid": "256704966899-1625215002@g.us",
+    "name": "Test Group Chat",
+    "notes": "AI enabled for group discussions"
+}
+
+###
+
+### Test 6: Add user with special characters in name
+POST {{baseUrl}}:{{port}}/ai/users/add
+Content-Type: application/json
+
+{
+    "remoteJid": "919876543210@s.whatsapp.net",
+    "phoneNumber": "+919876543210",
+    "name": "Rajesh Kumar 🇮🇳",
+    "notes": "VIP customer - priority support"
+}
+
+###
+
+### Test 7: Update existing user (upsert functionality)
+POST {{baseUrl}}:{{port}}/ai/users/add
+Content-Type: application/json
+
+{
+    "remoteJid": "256703722777@s.whatsapp.net",
+    "phoneNumber": "+256703722777",
+    "name": "Updated Test User",
+    "notes": "Updated information for existing user"
+}
+
+###
+
+### Test 8: Add user without remoteJid (should fail)
+POST {{baseUrl}}:{{port}}/ai/users/add
+Content-Type: application/json
+
+{
+    "phoneNumber": "+256700000000",
+    "name": "Invalid User"
+}
+
+###
+
+### === LIST AND QUERY AI-ENABLED USERS ===
+
+### Test 9: Get all AI-enabled users (only active)
+GET {{baseUrl}}:{{port}}/ai/users/list
+
+###
+
+### Test 10: Get all AI-enabled users including disabled
+GET {{baseUrl}}:{{port}}/ai/users/list?includeDisabled=true
+
+###
+
+### Test 11: Get specific user details by remoteJid
+GET {{baseUrl}}:{{port}}/ai/users/256703722777@s.whatsapp.net
+
+###
+
+### Test 12: Get user details with URL encoding
+GET {{baseUrl}}:{{port}}/ai/users/256703722777%40s.whatsapp.net
+
+###
+
+### Test 13: Check if specific user is AI-enabled
+GET {{baseUrl}}:{{port}}/ai/users/check/256703722777@s.whatsapp.net
+
+###
+
+### Test 14: Check if non-existent user is AI-enabled
+GET {{baseUrl}}:{{port}}/ai/users/check/999999999999@s.whatsapp.net
+
+###
+
+### Test 15: Get details of group chat
+GET {{baseUrl}}:{{port}}/ai/users/256704966899-1625215002@g.us
+
+###
+
+### === TOGGLE AND MODIFY USER STATUS ===
+
+### Test 16: Toggle AI status for a user (enable/disable)
+PATCH {{baseUrl}}:{{port}}/ai/users/toggle
+Content-Type: application/json
+
+{
+    "remoteJid": "263774108597@s.whatsapp.net"
+}
+
+###
+
+### Test 17: Toggle AI status again (should reverse previous state)
+PATCH {{baseUrl}}:{{port}}/ai/users/toggle
+Content-Type: application/json
+
+{
+    "remoteJid": "263774108597@s.whatsapp.net"
+}
+
+###
+
+### Test 18: Toggle non-existent user (should fail)
+PATCH {{baseUrl}}:{{port}}/ai/users/toggle
+Content-Type: application/json
+
+{
+    "remoteJid": "000000000000@s.whatsapp.net"
+}
+
+###
+
+### === REMOVE AND DELETE USERS ===
+
+### Test 19: Soft delete - Remove user from AI-enabled list (can be re-enabled)
+DELETE {{baseUrl}}:{{port}}/ai/users/remove
+Content-Type: application/json
+
+{
+    "remoteJid": "447911123456@s.whatsapp.net"
+}
+
+###
+
+### Test 20: Verify user is disabled but still in database
+GET {{baseUrl}}:{{port}}/ai/users/447911123456@s.whatsapp.net
+
+###
+
+### Test 21: Re-enable previously disabled user
+POST {{baseUrl}}:{{port}}/ai/users/add
+Content-Type: application/json
+
+{
+    "remoteJid": "447911123456@s.whatsapp.net",
+    "name": "Re-enabled UK User"
+}
+
+###
+
+### Test 22: Permanently delete user from database
+DELETE {{baseUrl}}:{{port}}/ai/users/delete
+Content-Type: application/json
+
+{
+    "remoteJid": "15551234567@s.whatsapp.net"
+}
+
+###
+
+### Test 23: Try to get permanently deleted user (should fail)
+GET {{baseUrl}}:{{port}}/ai/users/15551234567@s.whatsapp.net
+
+###
+
+### Test 24: Remove user without remoteJid (should fail)
+DELETE {{baseUrl}}:{{port}}/ai/users/remove
+Content-Type: application/json
+
+{}
+
+###
+
+### === INTEGRATION TESTS ===
+
+### Test 25: Add user, then send webhook to trigger AI response
+POST {{baseUrl}}:{{port}}/ai/users/add
+Content-Type: application/json
+
+{
+    "remoteJid": "256700000001@s.whatsapp.net",
+    "phoneNumber": "+256700000001",
+    "name": "Integration Test User",
+    "notes": "Testing webhook integration"
+}
+
+###
+
+### Test 26: Send webhook message from AI-enabled user
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+    "event": "messages.received",
+    "sessionId": "integration_test",
+    "data": {
+        "messages": {
+            "messageTimestamp": 1759170000,
+            "pushName": "Integration Test User",
+            "remoteJid": "256700000001@s.whatsapp.net",
+            "id": "INTEGRATION_TEST_001",
+            "message": {
+                "conversation": "Hello, this should trigger an AI response!"
+            }
+        }
+    },
+    "timestamp": 1759170005000
+}
+
+###
+
+### Test 27: Send webhook from non-AI-enabled user (should NOT trigger AI)
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+    "event": "messages.received",
+    "sessionId": "integration_test",
+    "data": {
+        "messages": {
+            "messageTimestamp": 1759170010,
+            "pushName": "Regular User",
+            "remoteJid": "256700000999@s.whatsapp.net",
+            "id": "REGULAR_TEST_001",
+            "message": {
+                "conversation": "This should NOT trigger an AI response"
+            }
+        }
+    },
+    "timestamp": 1759170015000
+}
+
+###
+
+### Test 28: Check last interaction time was updated
+GET {{baseUrl}}:{{port}}/ai/users/256700000001@s.whatsapp.net
+
+###
+
+### === BULK OPERATIONS ===
+
+### Test 29: Add multiple users in sequence
+POST {{baseUrl}}:{{port}}/ai/users/add
+Content-Type: application/json
+
+{
+    "remoteJid": "27123456789@s.whatsapp.net",
+    "phoneNumber": "+27123456789",
+    "name": "South Africa User"
+}
+
+###
+
+POST {{baseUrl}}:{{port}}/ai/users/add
+Content-Type: application/json
+
+{
+    "remoteJid": "234801234567@s.whatsapp.net",
+    "phoneNumber": "+234801234567",
+    "name": "Nigeria User"
+}
+
+###
+
+POST {{baseUrl}}:{{port}}/ai/users/add
+Content-Type: application/json
+
+{
+    "remoteJid": "254712345678@s.whatsapp.net",
+    "phoneNumber": "+254712345678",
+    "name": "Kenya User"
+}
+
+###
+
+### Test 30: Verify all users were added
+GET {{baseUrl}}:{{port}}/ai/users/list
+
+###
+
+### === EDGE CASES ===
+
+### Test 31: Add user with very long notes
+POST {{baseUrl}}:{{port}}/ai/users/add
+Content-Type: application/json
+
+{
+    "remoteJid": "256700000888@s.whatsapp.net",
+    "phoneNumber": "+256700000888",
+    "name": "Edge Case User",
+    "notes": "This is a very long note to test the database field limits and see how the system handles extended text content. It includes multiple sentences and various details about the user to ensure that long text is properly stored and retrieved from the SQLite database without any truncation or data loss issues."
+}
+
+###
+
+### Test 32: Add newsletter/broadcast channel
+POST {{baseUrl}}:{{port}}/ai/users/add
+Content-Type: application/json
+
+{
+    "remoteJid": "120363169319669622@newsletter",
+    "name": "AI Newsletter Channel",
+    "notes": "Testing AI responses in newsletter channels"
+}
+
+###
+
+### Test 33: Check user with special characters in remoteJid
+GET {{baseUrl}}:{{port}}/ai/users/check/120363169319669622@newsletter
+
+###
+
+### === CLEANUP TESTS ===
+
+### Test 34: List all users before cleanup
+GET {{baseUrl}}:{{port}}/ai/users/list?includeDisabled=true
+
+###
+
+### Test 35: Remove test user
+DELETE {{baseUrl}}:{{port}}/ai/users/remove
+Content-Type: application/json
+
+{
+    "remoteJid": "256703722777@s.whatsapp.net"
+}
+
+###
+
+### Test 36: Verify user was disabled
+GET {{baseUrl}}:{{port}}/ai/users/check/256700000888@s.whatsapp.net

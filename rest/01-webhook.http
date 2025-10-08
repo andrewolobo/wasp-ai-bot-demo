@@ -1,0 +1,526 @@
+### ============================================
+### WHATSAPP WEBHOOK PROCESSING TESTS
+### ============================================
+### Test the WhatsApp webhook endpoint with various message types
+### and AI auto-response functionality for whitelisted users
+### 
+### Features Tested:
+### 1. Message reception and database storage
+### 2. AI auto-response for whitelisted users (database-driven)
+### 3. Conversation context and history retrieval
+### 4. Various message formats (text, extended, emoji, group, newsletter)
+### 5. Edge cases and error handling
+###
+### Prerequisites:
+### - Server running on port 80
+### - Database initialized (npm run bootstrap)
+### - Azure OpenAI configured in .env
+### - Wasender API token configured in .env
+### - Users added to AI whitelist (see 04-ai-users.http)
+###
+### Related Endpoints:
+### - POST /webhook              - Receive WhatsApp webhooks
+### - GET  /messages/contact/:id - Verify message storage
+### - GET  /messages/search      - Search stored messages
+### ============================================
+
+@baseUrl = http://localhost
+@port = 80
+
+### === BASIC MESSAGE TESTS ===
+
+### Test 1.1: Valid WhatsApp Webhook - Simple Text Message
+# Basic text message from individual contact
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "test_session_123456789",
+  "data": {
+    "messages": {
+      "key": {
+        "remoteJid": "256703722777@s.whatsapp.net",
+        "fromMe": false,
+        "id": "3AB78DC5DCA66DB1F351"
+      },
+      "messageTimestamp": 1759132885,
+      "pushName": "Test User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Hello! This is a test message from REST Client."
+      },
+      "remoteJid": "256703722777@s.whatsapp.net",
+      "id": "3AB78DC5DCA66DB1F351"
+    }
+  },
+  "timestamp": 1759132890000
+}
+
+###
+
+### Test 1.2: Emoji Message
+# Test emoji support in messages
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "test_session_123456789",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759132900,
+      "pushName": "Emoji User",
+      "broadcast": false,
+      "message": {
+        "conversation": "😊🎉👍 Great work! 🚀"
+      },
+      "remoteJid": "256703722777@s.whatsapp.net",
+      "id": "MSG_EMOJI_TEST_001"
+    }
+  },
+  "timestamp": 1759132905000
+}
+
+###
+
+### Test 1.3: Extended Text Message
+# Test extended text format (longer messages, rich content)
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "test_session_123456789",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759132910,
+      "pushName": "Long Message User",
+      "broadcast": false,
+      "message": {
+        "extendedTextMessage": {
+          "text": "This is a longer message with extended text format. It might contain URLs, mentions, or other rich content that needs special handling."
+        }
+      },
+      "remoteJid": "256703722777@s.whatsapp.net",
+      "id": "MSG_EXTENDED_TEST_001"
+    }
+  },
+  "timestamp": 1759132915000
+}
+
+###
+
+### Test 1.4: Newsletter/Broadcast Message
+# Test broadcast messages from newsletter channels
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "newsletter_session_123",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759132920,
+      "broadcast": true,
+      "message": {
+        "conversation": "📰 Newsletter update: New features available! Check out our latest release."
+      },
+      "remoteJid": "120363169319669622@newsletter",
+      "id": "NEWSLETTER_MSG_001"
+    }
+  },
+  "timestamp": 1759132925000
+}
+
+###
+
+### Test 1.5: Group Message
+# Test messages from WhatsApp groups
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "group_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140090,
+      "pushName": "Group User",
+      "remoteJid": "256704966899-1625215002@g.us",
+      "id": "GROUP_001",
+      "message": {
+        "conversation": "Hello everyone in the group! This is a test message."
+      }
+    }
+  },
+  "timestamp": 1759140095000
+}
+
+###
+
+### === AI AUTO-RESPONSE TESTS ===
+### These tests trigger AI responses for whitelisted users
+### Note: User must be added to ai_enabled_users table first (see 04-ai-users.http)
+
+### Test 2.1: AI Response for Whitelisted User - Simple Question
+# If user is whitelisted, this will trigger an AI response
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "ai_test_session_001",
+  "data": {
+    "messages": {
+      "key": {
+        "remoteJid": "256703722777@s.whatsapp.net",
+        "fromMe": false,
+        "id": "AI_TEST_001"
+      },
+      "messageTimestamp": 1759140000,
+      "pushName": "Test User",
+      "broadcast": false,
+      "message": {
+        "conversation": "Can you help me understand what AI is?"
+      },
+      "remoteJid": "256703722777@s.whatsapp.net",
+      "id": "AI_TEST_001"
+    }
+  },
+  "timestamp": 1759140005000
+}
+
+###
+
+### Test 2.2: AI Response - Technical Question
+# Test AI's ability to handle technical questions
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "ai_test_session_002",
+  "data": {
+    "messages": {
+      "key": {
+        "remoteJid": "263774108597@s.whatsapp.net",
+        "fromMe": false,
+        "id": "AI_TEST_002"
+      },
+      "messageTimestamp": 1759140010,
+      "pushName": "Zimbabwe User",
+      "broadcast": false,
+      "message": {
+        "conversation": "How does machine learning differ from traditional programming?"
+      },
+      "remoteJid": "263774108597@s.whatsapp.net",
+      "id": "AI_TEST_002"
+    }
+  },
+  "timestamp": 1759140015000
+}
+
+###
+
+### Test 2.3: AI Response - Extended Text with Emoji
+# Test AI response with rich content
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "ai_test_session_003",
+  "data": {
+    "messages": {
+      "key": {
+        "remoteJid": "447911123456@s.whatsapp.net",
+        "fromMe": false,
+        "id": "AI_TEST_003"
+      },
+      "messageTimestamp": 1759140020,
+      "pushName": "UK User",
+      "broadcast": false,
+      "message": {
+        "extendedTextMessage": {
+          "text": "🤖 I'm working on a Node.js project and need advice about database design. Should I use MongoDB or PostgreSQL? 💾"
+        }
+      },
+      "remoteJid": "447911123456@s.whatsapp.net",
+      "id": "AI_TEST_003"
+    }
+  },
+  "timestamp": 1759140025000
+}
+
+###
+
+### Test 2.4: AI Response with Emoji
+# Test AI handling of emoji-heavy content
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "ai_emoji_test",
+  "data": {
+    "messages": {
+      "key": {
+        "remoteJid": "15551234567@s.whatsapp.net",
+        "fromMe": false,
+        "id": "AI_EMOJI_001"
+      },
+      "messageTimestamp": 1759140030,
+      "pushName": "US User",
+      "broadcast": false,
+      "message": {
+        "conversation": "🤖 What's the best programming language for beginners? 👨‍💻"
+      },
+      "remoteJid": "15551234567@s.whatsapp.net",
+      "id": "AI_EMOJI_001"
+    }
+  },
+  "timestamp": 1759140035000
+}
+
+###
+
+### === CONVERSATION CONTEXT TESTS ===
+### Test AI's ability to maintain conversation context
+
+### Test 3.1: Build conversation history (first message)
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "context_building",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140040,
+      "pushName": "Context User",
+      "remoteJid": "256700000001@s.whatsapp.net",
+      "id": "CONTEXT_001",
+      "message": {
+        "conversation": "Hello, I'm learning about machine learning."
+      }
+    }
+  },
+  "timestamp": 1759140045000
+}
+
+###
+
+### Test 3.2: Build conversation history (second message)
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "context_building",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140050,
+      "pushName": "Context User",
+      "remoteJid": "256700000001@s.whatsapp.net",
+      "id": "CONTEXT_002",
+      "message": {
+        "conversation": "I'm particularly interested in neural networks and deep learning."
+      }
+    }
+  },
+  "timestamp": 1759140055000
+}
+
+###
+
+### Test 3.3: AI response with context (should reference previous messages)
+# AI should understand the context from previous messages
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "context_building",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140060,
+      "pushName": "Context User",
+      "remoteJid": "256700000001@s.whatsapp.net",
+      "id": "CONTEXT_003",
+      "message": {
+        "conversation": "Based on my interests, what should I study first?"
+      }
+    }
+  },
+  "timestamp": 1759140065000
+}
+
+###
+
+### === ERROR HANDLING & EDGE CASES ===
+
+### Test 4.1: Invalid Webhook - Missing Data
+# Test error handling for incomplete webhook payload
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "invalid_test"
+}
+
+###
+
+### Test 4.2: Invalid Webhook - Wrong Event Type
+# Test handling of unsupported event types
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "status.update",
+  "sessionId": "status_session_123",
+  "data": {
+    "status": "online"
+  },
+  "timestamp": 1759132930000
+}
+
+###
+
+### Test 4.3: Empty Message Content
+# Test handling of empty messages
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "edge_case_session_001",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150100,
+      "pushName": "Empty Message User",
+      "broadcast": false,
+      "message": {
+        "conversation": ""
+      },
+      "remoteJid": "empty_msg@s.whatsapp.net",
+      "id": "EMPTY_MSG_001"
+    }
+  },
+  "timestamp": 1759150105000
+}
+
+###
+
+### Test 4.4: Special Characters in Message
+# Test handling of special characters and symbols
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "special_chars_test",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759150110,
+      "pushName": "Special Chars User",
+      "remoteJid": "special@s.whatsapp.net",
+      "id": "SPECIAL_001",
+      "message": {
+        "conversation": "Testing @#$%^&*() special <chars> & \"quotes\" and 'apostrophes'"
+      }
+    }
+  },
+  "timestamp": 1759150115000
+}
+
+###
+
+### Test 4.5: Long Message Content
+# Test handling of very long messages
+POST {{baseUrl}}:{{port}}/webhook
+Content-Type: application/json
+
+{
+  "event": "messages.received",
+  "sessionId": "long_message_test",
+  "data": {
+    "messages": {
+      "messageTimestamp": 1759140100,
+      "pushName": "Verbose User",
+      "remoteJid": "44123456789@s.whatsapp.net",
+      "id": "LONG_001",
+      "message": {
+        "conversation": "I have a very complex question about artificial intelligence and machine learning. I'm trying to understand the differences between supervised, unsupervised, and reinforcement learning. I've been reading about neural networks, deep learning, and various algorithms like decision trees, random forests, and support vector machines. Could you provide a comprehensive explanation that would help a beginner like me understand these concepts and how they relate to each other? I'm particularly interested in practical applications and which approach would be best for different types of problems in real-world scenarios."
+      }
+    }
+  },
+  "timestamp": 1759140105000
+}
+
+###
+
+### === VERIFICATION TESTS ===
+### Verify that messages were stored correctly in the database
+
+### Test 5.1: Check recent messages were stored
+GET {{baseUrl}}:{{port}}/messages/recent?hours=1&limit=10
+
+###
+
+### Test 5.2: Get messages for specific contact
+GET {{baseUrl}}:{{port}}/messages/contact/256703722777@s.whatsapp.net?limit=5
+
+###
+
+### Test 5.3: Search messages by content
+GET {{baseUrl}}:{{port}}/messages/search?q=machine learning&limit=10
+
+###
+
+### Test 5.4: Get messages by session
+GET {{baseUrl}}:{{port}}/messages/session/test_session_123456789?limit=10
+
+###
+
+### ============================================
+### EXPECTED BEHAVIORS
+### ============================================
+###
+### Message Storage:
+### - All valid webhooks should return 200 OK
+### - Messages should be stored in whatsapp_messages table
+### - Phone numbers should be extracted from remoteJid
+###
+### AI Auto-Response (for whitelisted users):
+### - Check if user is in ai_enabled_users table
+### - If enabled=true, retrieve conversation history
+### - Generate AI response using Azure OpenAI GPT-4o
+### - Send response back via Wasender API
+### - Update last_interaction timestamp
+###
+### Error Handling:
+### - Invalid webhooks should return 400/422
+### - Missing required fields should be handled gracefully
+### - Database errors should be logged
+###
+### ============================================
+### TROUBLESHOOTING
+### ============================================
+###
+### If AI responses not working:
+### 1. Verify user is in ai_enabled_users table:
+###    GET /ai-users/check/256703722777@s.whatsapp.net
+### 2. Add user to whitelist:
+###    POST /ai-users/add (see 04-ai-users.http)
+### 3. Check Azure OpenAI configuration in .env
+### 4. Check Wasender API token in .env
+### 5. Review server logs for errors
+###
+### If messages not storing:
+### 1. Verify database exists: npm run bootstrap
+### 2. Check database file permissions
+### 3. Review server logs for SQL errors
+###
+### ============================================

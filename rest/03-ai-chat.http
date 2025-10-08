@@ -63,7 +63,7 @@ POST {{baseUrl}}/ai/analyze-conversation
 Content-Type: application/json
 
 {
-  "sessionId": "7880f22816319b6c2483f36f377abaea7879fb2418102735f1bb7dbacd1b154c",
+  "sessionId": "test_session_123456789",
   "prompt": "Analyze the sentiment and main topics of this conversation. What is the user's overall mood and what are they discussing?",
   "limit": 10
 }
