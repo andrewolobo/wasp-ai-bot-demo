@@ -400,6 +400,49 @@ app.post('/webhook', async (req, res) => {
                 const result = await db.insertMessage(restructuredData);
                 console.log('✅ Message saved to database:', result);
 
+                // Save/update contact information
+                try {
+                    // For group messages, check if there's a participant field (actual sender)
+                    // participant field contains the JID of the person who sent the message in the group
+                    let contactJid = originalData.remoteJid;
+                    let isGroupMessage = false;
+
+                    // Check if this is a group message by looking at remoteJid
+                    if (originalData.remoteJid && originalData.remoteJid.includes('@g.us')) {
+                        isGroupMessage = true;
+
+                        // Look for participant in various possible locations in the webhook data
+                        if (originalData.participant) {
+                            contactJid = originalData.participant;
+                        } else if (originalData.key && originalData.key.participant) {
+                            contactJid = originalData.key.participant;
+                        } else if (webhookData.data.messages.participant) {
+                            contactJid = webhookData.data.messages.participant;
+                        }
+
+                        console.log('👥 Group message detected. Group:', originalData.remoteJid, 'Participant:', contactJid);
+                    }
+
+                    // Extract phone info from the contact JID (participant for groups, remoteJid for individuals)
+                    const phoneInfo = extractPhoneNumberFromRemoteJid(contactJid);
+                    const contactData = {
+                        remoteJid: contactJid,
+                        phoneNumber: phoneInfo.phoneNumber ? `+${phoneInfo.phoneNumber}` : null,
+                        countryCode: phoneInfo.countryCode,
+                        localNumber: phoneInfo.localNumber,
+                        pushName: originalData.pushName || 'Unknown',
+                        contactType: phoneInfo.type || 'unknown',
+                        groupId: isGroupMessage ? originalData.remoteJid : (phoneInfo.groupId || null),
+                        channelId: phoneInfo.channelId || null
+                    };
+
+                    const contactResult = await db.saveContact(contactData);
+                    console.log('👤 Contact saved:', contactResult.action, '-', contactResult.remoteJid);
+                } catch (contactError) {
+                    console.error('⚠️  Failed to save contact:', contactError.message);
+                    // Don't fail the whole request if contact saving fails
+                }
+
                 // Check if user is AI-enabled in database
                 let aiResponse = null;
                 const isAIEnabled = await db.isAIEnabled(originalData.remoteJid);
@@ -450,7 +493,7 @@ ${conversationHistory}
 
 The user just sent: "${messageText}"
 
-Please respond as Joshua in a helpful, friendly, and contextually appropriate way. Keep your response concise and conversational, suitable for WhatsApp messaging.`;
+Please respond as Joshua in a helpful, friendly, and contextually appropriate way. Keep your response concise and conversational, suitable for WhatsApp messaging. NOTE: DO NOT YOUR NAME OR TIMESTAMP TO THE TEXT. DO NOT USE EMOJIS. END RESPONSES NATURALLY. DO NOT FOLLOW UP WITH A QUESTION`;
 
                         // Get AI response
                         const aiResult = await azureOpenAI.getChatCompletion(aiPrompt, {
@@ -1308,6 +1351,138 @@ app.post('/message/send-bulk', async (req, res) => {
     }
 });
 
+// ==========================================
+// CONTACTS MANAGEMENT ENDPOINTS
+// ==========================================
+
+// Get all contacts
+app.get('/contacts', async (req, res) => {
+    try {
+        const contactType = req.query.type; // 'individual', 'group', 'newsletter'
+        const limit = parseInt(req.query.limit) || 100;
+        const orderBy = req.query.orderBy || 'lastSeen';
+
+        const contacts = await db.getContacts({ contactType, limit, orderBy });
+
+        res.json({
+            status: 'success',
+            count: contacts.length,
+            filter: contactType || 'all',
+            contacts: contacts
+        });
+
+    } catch (error) {
+        console.error('❌ Error getting contacts:', error.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to get contacts',
+            error: error.message
+        });
+    }
+});
+
+// Get a specific contact
+app.get('/contacts/:remoteJid', async (req, res) => {
+    try {
+        const remoteJid = decodeURIComponent(req.params.remoteJid);
+        const contact = await db.getContact(remoteJid);
+
+        if (contact) {
+            res.json({
+                status: 'success',
+                data: contact
+            });
+        } else {
+            res.status(404).json({
+                status: 'error',
+                message: 'Contact not found'
+            });
+        }
+
+    } catch (error) {
+        console.error('❌ Error getting contact:', error.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to get contact',
+            error: error.message
+        });
+    }
+});
+
+// Search contacts
+app.get('/contacts/search/:term', async (req, res) => {
+    try {
+        const searchTerm = decodeURIComponent(req.params.term);
+        const limit = parseInt(req.query.limit) || 50;
+
+        const contacts = await db.searchContacts(searchTerm, limit);
+
+        res.json({
+            status: 'success',
+            count: contacts.length,
+            searchTerm: searchTerm,
+            contacts: contacts
+        });
+
+    } catch (error) {
+        console.error('❌ Error searching contacts:', error.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to search contacts',
+            error: error.message
+        });
+    }
+});
+
+// Get contact statistics
+app.get('/contacts/stats/summary', async (req, res) => {
+    try {
+        const stats = await db.getContactStats();
+
+        res.json({
+            status: 'success',
+            stats: stats
+        });
+
+    } catch (error) {
+        console.error('❌ Error getting contact stats:', error.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to get contact statistics',
+            error: error.message
+        });
+    }
+});
+
+// Delete a contact
+app.delete('/contacts/:remoteJid', async (req, res) => {
+    try {
+        const remoteJid = decodeURIComponent(req.params.remoteJid);
+        const deleted = await db.deleteContact(remoteJid);
+
+        if (deleted) {
+            res.json({
+                status: 'success',
+                message: 'Contact deleted successfully',
+                remoteJid: remoteJid
+            });
+        } else {
+            res.status(404).json({
+                status: 'error',
+                message: 'Contact not found'
+            });
+        }
+
+    } catch (error) {
+        console.error('❌ Error deleting contact:', error.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to delete contact',
+            error: error.message
+        });
+    }
+});
+
 // Start the server
 async function startServer() {
     try {
@@ -1328,6 +1503,11 @@ async function startServer() {
             console.log('  POST /phone/extract - Extract phone from remoteJid');
             console.log('  GET /phone/contacts - Get all contacts with phone info');
             console.log('  GET /phone/stats - Get phone number statistics');
+            console.log('  GET /contacts - Get all contacts (NEW)');
+            console.log('  GET /contacts/:remoteJid - Get specific contact (NEW)');
+            console.log('  GET /contacts/search/:term - Search contacts (NEW)');
+            console.log('  GET /contacts/stats/summary - Contact statistics (NEW)');
+            console.log('  DELETE /contacts/:remoteJid - Delete contact (NEW)');
             console.log('  GET /health - Health check');
         });
     } catch (error) {

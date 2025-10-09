@@ -130,3 +130,64 @@ INSERT INTO whatsapp_messages (
 INSERT INTO ai_enabled_users (remoteJid, phoneNumber, name, notes)
 VALUES ('256703722777@s.whatsapp.net', '+256703722777', 'Test User', 'Testing AI responses');
 */
+
+-- Create contacts table to store all WhatsApp contacts
+-- This table stores contact information for everyone who sends a message
+CREATE TABLE IF NOT EXISTS contacts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    remoteJid TEXT NOT NULL UNIQUE,
+    phoneNumber TEXT,
+    countryCode TEXT,
+    localNumber TEXT,
+    pushName TEXT,
+    contactType TEXT DEFAULT 'individual', -- 'individual', 'group', 'newsletter', 'unknown'
+    groupId TEXT,
+    channelId TEXT,
+    messageCount INTEGER DEFAULT 0,
+    firstSeen DATETIME DEFAULT CURRENT_TIMESTAMP,
+    lastSeen DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for contacts table
+CREATE INDEX IF NOT EXISTS idx_contacts_remoteJid ON contacts(remoteJid);
+CREATE INDEX IF NOT EXISTS idx_contacts_phoneNumber ON contacts(phoneNumber);
+CREATE INDEX IF NOT EXISTS idx_contacts_contactType ON contacts(contactType);
+CREATE INDEX IF NOT EXISTS idx_contacts_lastSeen ON contacts(lastSeen);
+
+-- Create trigger to update the updated_at timestamp for contacts
+CREATE TRIGGER IF NOT EXISTS update_contacts_timestamp 
+    AFTER UPDATE ON contacts
+    FOR EACH ROW
+BEGIN
+    UPDATE contacts 
+    SET updated_at = CURRENT_TIMESTAMP 
+    WHERE id = NEW.id;
+END;
+
+-- Create a view for contacts with formatted timestamps
+CREATE VIEW IF NOT EXISTS contacts_view AS
+SELECT 
+    id,
+    remoteJid,
+    phoneNumber,
+    countryCode,
+    localNumber,
+    pushName,
+    contactType,
+    groupId,
+    channelId,
+    messageCount,
+    datetime(firstSeen) as firstSeen,
+    datetime(lastSeen) as lastSeen,
+    datetime(created_at) as created_at,
+    datetime(updated_at) as updated_at
+FROM contacts
+ORDER BY lastSeen DESC;
+
+-- Sample contact insert (commented out)
+/*
+INSERT INTO contacts (remoteJid, phoneNumber, countryCode, localNumber, pushName, contactType, messageCount)
+VALUES ('256703722777@s.whatsapp.net', '+256703722777', '256', '703722777', 'John Doe', 'individual', 1);
+*/

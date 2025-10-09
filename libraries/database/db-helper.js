@@ -397,6 +397,256 @@ class WhatsAppDB {
             });
         });
     }
+
+    // ==========================================
+    // CONTACTS MANAGEMENT METHODS
+    // ==========================================
+
+    /**
+     * Save or update a contact in the contacts table
+     * Checks if contact exists before inserting (upsert behavior)
+     * @param {Object} contactData - Contact information
+     * @param {string} contactData.remoteJid - WhatsApp remote JID (required)
+     * @param {string} contactData.phoneNumber - Full phone number with country code
+     * @param {string} contactData.countryCode - Country code extracted from phone
+     * @param {string} contactData.localNumber - Local phone number without country code
+     * @param {string} contactData.pushName - Display name from WhatsApp
+     * @param {string} contactData.contactType - Type: 'individual', 'group', 'newsletter', 'unknown'
+     * @param {string} contactData.groupId - Group ID if type is 'group'
+     * @param {string} contactData.channelId - Channel ID if type is 'newsletter'
+     * @returns {Promise<Object>} Saved contact information
+     */
+    saveContact(contactData) {
+        return new Promise((resolve, reject) => {
+            const {
+                remoteJid,
+                phoneNumber = null,
+                countryCode = null,
+                localNumber = null,
+                pushName = null,
+                contactType = 'individual',
+                groupId = null,
+                channelId = null
+            } = contactData;
+
+            if (!remoteJid) {
+                reject(new Error('remoteJid is required'));
+                return;
+            }
+
+            // First, check if contact already exists
+            const checkSql = `SELECT id, messageCount FROM contacts WHERE remoteJid = ?`;
+
+            this.db.get(checkSql, [remoteJid], (err, row) => {
+                if (err) {
+                    reject(new Error(`Failed to check contact: ${err.message}`));
+                    return;
+                }
+
+                if (row) {
+                    // Contact exists - update it
+                    const updateSql = `
+                        UPDATE contacts 
+                        SET phoneNumber = COALESCE(?, phoneNumber),
+                            countryCode = COALESCE(?, countryCode),
+                            localNumber = COALESCE(?, localNumber),
+                            pushName = COALESCE(?, pushName),
+                            contactType = ?,
+                            groupId = COALESCE(?, groupId),
+                            channelId = COALESCE(?, channelId),
+                            messageCount = messageCount + 1,
+                            lastSeen = CURRENT_TIMESTAMP
+                        WHERE remoteJid = ?
+                    `;
+
+                    this.db.run(updateSql, [
+                        phoneNumber,
+                        countryCode,
+                        localNumber,
+                        pushName,
+                        contactType,
+                        groupId,
+                        channelId,
+                        remoteJid
+                    ], function (err) {
+                        if (err) {
+                            reject(new Error(`Failed to update contact: ${err.message}`));
+                            return;
+                        }
+                        resolve({
+                            id: row.id,
+                            remoteJid,
+                            action: 'updated',
+                            messageCount: row.messageCount + 1
+                        });
+                    });
+                } else {
+                    // Contact doesn't exist - insert new
+                    const insertSql = `
+                        INSERT INTO contacts (
+                            remoteJid, phoneNumber, countryCode, localNumber, 
+                            pushName, contactType, groupId, channelId, messageCount
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+                    `;
+
+                    this.db.run(insertSql, [
+                        remoteJid,
+                        phoneNumber,
+                        countryCode,
+                        localNumber,
+                        pushName,
+                        contactType,
+                        groupId,
+                        channelId
+                    ], function (err) {
+                        if (err) {
+                            reject(new Error(`Failed to insert contact: ${err.message}`));
+                            return;
+                        }
+                        resolve({
+                            id: this.lastID,
+                            remoteJid,
+                            action: 'created',
+                            messageCount: 1
+                        });
+                    });
+                }
+            });
+        });
+    }
+
+    /**
+     * Get a contact by remoteJid
+     * @param {string} remoteJid - WhatsApp remote JID
+     * @returns {Promise<Object|null>} Contact information or null if not found
+     */
+    getContact(remoteJid) {
+        return new Promise((resolve, reject) => {
+            const sql = `SELECT * FROM contacts_view WHERE remoteJid = ?`;
+
+            this.db.get(sql, [remoteJid], (err, row) => {
+                if (err) {
+                    reject(new Error(`Failed to get contact: ${err.message}`));
+                    return;
+                }
+                resolve(row || null);
+            });
+        });
+    }
+
+    /**
+     * Get all contacts with optional filtering
+     * @param {Object} options - Query options
+     * @param {string} options.contactType - Filter by type ('individual', 'group', 'newsletter')
+     * @param {number} options.limit - Maximum number of contacts to return
+     * @param {string} options.orderBy - Order by field (default: 'lastSeen')
+     * @returns {Promise<Array>} Array of contacts
+     */
+    getContacts(options = {}) {
+        return new Promise((resolve, reject) => {
+            const {
+                contactType = null,
+                limit = 100,
+                orderBy = 'lastSeen'
+            } = options;
+
+            let sql = `SELECT * FROM contacts_view`;
+            const params = [];
+
+            if (contactType) {
+                sql += ` WHERE contactType = ?`;
+                params.push(contactType);
+            }
+
+            // Validate orderBy to prevent SQL injection
+            const validOrderFields = ['lastSeen', 'firstSeen', 'messageCount', 'pushName', 'phoneNumber'];
+            const safeOrderBy = validOrderFields.includes(orderBy) ? orderBy : 'lastSeen';
+
+            sql += ` ORDER BY ${safeOrderBy} DESC LIMIT ?`;
+            params.push(limit);
+
+            this.db.all(sql, params, (err, rows) => {
+                if (err) {
+                    reject(new Error(`Failed to get contacts: ${err.message}`));
+                    return;
+                }
+                resolve(rows || []);
+            });
+        });
+    }
+
+    /**
+     * Search contacts by name or phone number
+     * @param {string} searchTerm - Search term
+     * @param {number} limit - Maximum number of results
+     * @returns {Promise<Array>} Array of matching contacts
+     */
+    searchContacts(searchTerm, limit = 50) {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT * FROM contacts_view 
+                WHERE pushName LIKE ? OR phoneNumber LIKE ? OR remoteJid LIKE ?
+                ORDER BY lastSeen DESC
+                LIMIT ?
+            `;
+            const searchPattern = `%${searchTerm}%`;
+
+            this.db.all(sql, [searchPattern, searchPattern, searchPattern, limit], (err, rows) => {
+                if (err) {
+                    reject(new Error(`Failed to search contacts: ${err.message}`));
+                    return;
+                }
+                resolve(rows || []);
+            });
+        });
+    }
+
+    /**
+     * Get contact statistics
+     * @returns {Promise<Object>} Contact statistics
+     */
+    getContactStats() {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT 
+                    COUNT(*) as totalContacts,
+                    SUM(CASE WHEN contactType = 'individual' THEN 1 ELSE 0 END) as individuals,
+                    SUM(CASE WHEN contactType = 'group' THEN 1 ELSE 0 END) as groups,
+                    SUM(CASE WHEN contactType = 'newsletter' THEN 1 ELSE 0 END) as newsletters,
+                    SUM(CASE WHEN contactType = 'unknown' THEN 1 ELSE 0 END) as unknown,
+                    SUM(messageCount) as totalMessages,
+                    MAX(lastSeen) as mostRecentContact
+                FROM contacts
+            `;
+
+            this.db.get(sql, [], (err, row) => {
+                if (err) {
+                    reject(new Error(`Failed to get contact stats: ${err.message}`));
+                    return;
+                }
+                resolve(row || {});
+            });
+        });
+    }
+
+    /**
+     * Delete a contact
+     * @param {string} remoteJid - WhatsApp remote JID
+     * @returns {Promise<boolean>} True if deleted, false if not found
+     */
+    deleteContact(remoteJid) {
+        return new Promise((resolve, reject) => {
+            const sql = `DELETE FROM contacts WHERE remoteJid = ?`;
+
+            this.db.run(sql, [remoteJid], function (err) {
+                if (err) {
+                    reject(new Error(`Failed to delete contact: ${err.message}`));
+                    return;
+                }
+                resolve(this.changes > 0);
+            });
+        });
+    }
 }
 
 module.exports = WhatsAppDB;

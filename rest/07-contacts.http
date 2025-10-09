@@ -1,0 +1,304 @@
+### ==========================================
+### CONTACTS MANAGEMENT API TESTS
+### ==========================================
+### Test suite for contacts storage and retrieval
+### Automatically stores contacts when messages are received
+### Updated: October 8, 2025
+
+@baseUrl = http://localhost
+@contentType = application/json
+
+### ==========================================
+### 1. GET ALL CONTACTS
+### ==========================================
+
+### Get all contacts (default: last 100)
+GET {{baseUrl}}/contacts
+Accept: {{contentType}}
+
+### Get all contacts with custom limit
+GET {{baseUrl}}/contacts?limit=50
+Accept: {{contentType}}
+
+### Get only individual contacts
+GET {{baseUrl}}/contacts?type=individual
+Accept: {{contentType}}
+
+### Get only group contacts
+GET {{baseUrl}}/contacts?type=group
+Accept: {{contentType}}
+
+### Get only newsletter contacts
+GET {{baseUrl}}/contacts?type=newsletter
+Accept: {{contentType}}
+
+### Get contacts ordered by message count
+GET {{baseUrl}}/contacts?orderBy=messageCount&limit=20
+Accept: {{contentType}}
+
+### Get contacts ordered by first seen
+GET {{baseUrl}}/contacts?orderBy=firstSeen&limit=20
+Accept: {{contentType}}
+
+### ==========================================
+### 2. GET SPECIFIC CONTACT
+### ==========================================
+
+### Get specific contact by remoteJid (replace with actual remoteJid)
+GET {{baseUrl}}/contacts/256703722777@s.whatsapp.net
+Accept: {{contentType}}
+
+### Get contact that doesn't exist
+GET {{baseUrl}}/contacts/nonexistent@s.whatsapp.net
+Accept: {{contentType}}
+
+### ==========================================
+### 3. SEARCH CONTACTS
+### ==========================================
+
+### Search contacts by name
+GET {{baseUrl}}/contacts/search/John
+Accept: {{contentType}}
+
+### Search contacts by phone number
+GET {{baseUrl}}/contacts/search/256703
+Accept: {{contentType}}
+
+### Search contacts by remoteJid
+GET {{baseUrl}}/contacts/search/@s.whatsapp.net
+Accept: {{contentType}}
+
+### Search with limit
+GET {{baseUrl}}/contacts/search/test?limit=10
+Accept: {{contentType}}
+
+### ==========================================
+### 4. CONTACT STATISTICS
+### ==========================================
+
+### Get contact statistics summary
+GET {{baseUrl}}/contacts/stats/summary
+Accept: {{contentType}}
+
+### ==========================================
+### 5. DELETE CONTACT
+### ==========================================
+
+### Delete a specific contact (replace with actual remoteJid)
+DELETE {{baseUrl}}/contacts/test@s.whatsapp.net
+Accept: {{contentType}}
+
+### ==========================================
+### 6. INTEGRATION TESTS
+### ==========================================
+
+### Test 1: Send webhook -> Check contact created
+### Step 1: Send a webhook message
+POST {{baseUrl}}/webhook
+Content-Type: {{contentType}}
+
+{
+  "event": "messages.received",
+  "sessionId": "test_session_contacts",
+  "timestamp": 1728381234000,
+  "data": {
+    "messages": {
+      "remoteJid": "256999888777@s.whatsapp.net",
+      "pushName": "Test Contact User",
+      "messageTimestamp": 1728381234,
+      "id": "TEST_CONTACT_MSG_001",
+      "message": {
+        "conversation": "Hello, this is a test for contacts!"
+      },
+      "broadcast": false
+    }
+  }
+}
+
+### Step 2: Verify contact was created
+GET {{baseUrl}}/contacts/256999888777@s.whatsapp.net
+Accept: {{contentType}}
+
+### Test 2: Send multiple messages from same contact -> Check message count increases
+### Message 1
+POST {{baseUrl}}/webhook
+Content-Type: {{contentType}}
+
+{
+  "event": "messages.received",
+  "sessionId": "test_session_contacts",
+  "timestamp": 1728381235000,
+  "data": {
+    "messages": {
+      "remoteJid": "256999888777@s.whatsapp.net",
+      "pushName": "Test Contact User",
+      "messageTimestamp": 1728381235,
+      "id": "TEST_CONTACT_MSG_002",
+      "message": {
+        "conversation": "Second message"
+      },
+      "broadcast": false
+    }
+  }
+}
+
+### Message 2
+POST {{baseUrl}}/webhook
+Content-Type: {{contentType}}
+
+{
+  "event": "messages.received",
+  "sessionId": "test_session_contacts",
+  "timestamp": 1728381236000,
+  "data": {
+    "messages": {
+      "remoteJid": "256999888777@s.whatsapp.net",
+      "pushName": "Test Contact User",
+      "messageTimestamp": 1728381236,
+      "id": "TEST_CONTACT_MSG_003",
+      "message": {
+        "conversation": "Third message"
+      },
+      "broadcast": false
+    }
+  }
+}
+
+### Check message count (should be 3)
+GET {{baseUrl}}/contacts/256999888777@s.whatsapp.net
+Accept: {{contentType}}
+
+### Test 3: Group contact (with participant field)
+POST {{baseUrl}}/webhook
+Content-Type: {{contentType}}
+
+{
+  "event": "messages.received",
+  "sessionId": "test_session_contacts",
+  "timestamp": 1728381240000,
+  "data": {
+    "messages": {
+      "remoteJid": "256704966899-1625215002@g.us",
+      "participant": "256703722888@s.whatsapp.net",
+      "pushName": "Group Participant",
+      "messageTimestamp": 1728381240,
+      "id": "TEST_GROUP_MSG_001",
+      "message": {
+        "conversation": "Group message test"
+      },
+      "broadcast": false
+    }
+  }
+}
+
+### Verify group participant contact (should save participant, not group)
+GET {{baseUrl}}/contacts/256703722888@s.whatsapp.net
+Accept: {{contentType}}
+
+### Check that group ID is NOT saved as a contact
+GET {{baseUrl}}/contacts/256704966899-1625215002@g.us
+Accept: {{contentType}}
+
+### Test 4: Newsletter contact
+POST {{baseUrl}}/webhook
+Content-Type: {{contentType}}
+
+{
+  "event": "messages.received",
+  "sessionId": "test_session_contacts",
+  "timestamp": 1728381250000,
+  "data": {
+    "messages": {
+      "remoteJid": "120363169319669622@newsletter",
+      "pushName": "Newsletter Channel",
+      "messageTimestamp": 1728381250,
+      "id": "TEST_NEWSLETTER_MSG_001",
+      "message": {
+        "conversation": "Newsletter broadcast"
+      },
+      "broadcast": true
+    }
+  }
+}
+
+### Verify newsletter contact
+GET {{baseUrl}}/contacts/120363169319669622@newsletter
+Accept: {{contentType}}
+
+### ==========================================
+### 7. COMPREHENSIVE TESTS
+### ==========================================
+
+### Get all contacts after tests
+GET {{baseUrl}}/contacts?limit=200
+Accept: {{contentType}}
+
+### Get statistics after tests
+GET {{baseUrl}}/contacts/stats/summary
+Accept: {{contentType}}
+
+### Get all individuals
+GET {{baseUrl}}/contacts?type=individual&limit=100
+Accept: {{contentType}}
+
+### Get all groups
+GET {{baseUrl}}/contacts?type=group&limit=100
+Accept: {{contentType}}
+
+### Search for test contacts
+GET {{baseUrl}}/contacts/search/Test
+Accept: {{contentType}}
+
+### ==========================================
+### 8. CLEANUP (Optional)
+### ==========================================
+
+### Delete test contacts
+DELETE {{baseUrl}}/contacts/256999888777@s.whatsapp.net
+Accept: {{contentType}}
+
+###
+DELETE {{baseUrl}}/contacts/256704966899-1625215002@g.us
+Accept: {{contentType}}
+
+###
+DELETE {{baseUrl}}/contacts/120363169319669622@newsletter
+Accept: {{contentType}}
+
+### ==========================================
+### NOTES
+### ==========================================
+# 
+# Contact Storage Behavior:
+# - Contacts are automatically saved when webhook receives a message
+# - First message creates the contact (messageCount = 1)
+# - Subsequent messages update the contact (messageCount++)
+# - lastSeen timestamp is updated on each message
+# - Phone number, country code, and local number are extracted automatically
+# 
+# Contact Types:
+# - individual: Regular WhatsApp users (phoneNumber@s.whatsapp.net)
+# - group: WhatsApp groups (phoneNumber-timestamp@g.us)
+# - newsletter: WhatsApp channels (channelId@newsletter)
+# - unknown: Unrecognized format
+# 
+# Stored Information:
+# - remoteJid: Unique WhatsApp identifier
+# - phoneNumber: Full phone with country code (+256703722777)
+# - countryCode: Extracted country code (256)
+# - localNumber: Phone without country code (703722777)
+# - pushName: Display name from WhatsApp
+# - contactType: individual/group/newsletter/unknown
+# - messageCount: Total messages received from contact
+# - firstSeen: First message timestamp
+# - lastSeen: Most recent message timestamp
+# 
+# Use Cases:
+# 1. View all active contacts
+# 2. Track message frequency per contact
+# 3. Find contacts by name or phone
+# 4. Analyze contact statistics
+# 5. Identify most active users
+# 6. Clean up inactive contacts
+# 
+### ==========================================
