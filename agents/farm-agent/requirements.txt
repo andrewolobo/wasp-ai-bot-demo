@@ -1,0 +1,38 @@
+# Core Google ADK dependencies
+google-adk
+
+# LLM and API dependencies
+litellm
+openai
+
+# Environment and configuration
+python-dotenv
+
+# Database and data processing
+pandas
+sqlite3
+
+# Date and time handling
+datetime
+
+# Logging (built-in, but including for completeness)
+logging
+
+# JSON handling (built-in)
+json
+
+# Decimal precision (built-in)
+decimal
+
+# Type hints (built-in in Python 3.5+)
+typing
+
+# OS operations (built-in)
+os
+
+# HTTP requests (if needed for messaging services)
+requests
+
+# Additional utilities that might be useful
+pytz  # For timezone handling
+phonenumbers  # For phone number validation and formatting
