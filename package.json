@@ -10,11 +10,13 @@
         "bootstrap:sample": "node libraries/database/bootstrap.js --with-sample-data"
     },
     "dependencies": {
+        "amqplib": "^0.10.9",
         "dotenv": "^16.3.1",
         "express": "^4.18.2",
         "node-fetch": "^3.3.2",
         "openai": "^4.20.1",
-        "sqlite3": "^5.1.6"
+        "sqlite3": "^5.1.6",
+        "uuid": "^13.0.0"
     },
     "devDependencies": {
         "nodemon": "^3.0.1"

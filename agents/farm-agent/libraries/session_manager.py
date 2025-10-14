@@ -131,13 +131,44 @@ class SessionManager:
                 for event in events:
                     # Try to extract text from different possible attributes
                     try:
-                        if hasattr(event, 'data') and event.data:  # type: ignore
-                            response_text = str(event.data)  # type: ignore
-                        elif hasattr(event, 'content') and event.content:
-                            response_text = str(event.content)
+                        # Check if event has 'content' attribute with 'parts' (Google ADK format)
+                        if hasattr(event, 'content') and event.content:
+                            content_obj = event.content
+                            # Check if content has parts array (Google AI format)
+                            if hasattr(content_obj, 'parts') and content_obj.parts:
+                                # Extract text from all parts
+                                for part in content_obj.parts:
+                                    if hasattr(part, 'text') and part.text:
+                                        response_text += part.text
+                            # Fallback to string conversion if parts not found
+                            elif str(content_obj) and 'text=' in str(content_obj):
+                                # Try to parse text from string representation
+                                content_str = str(content_obj)
+                                if "text='" in content_str:
+                                    start = content_str.find("text='") + 6
+                                    end = content_str.find("'", start)
+                                    if end > start:
+                                        response_text = content_str[start:end]
+                        # Check for direct data attribute
+                        elif hasattr(event, 'data') and event.data:  # type: ignore
+                            data_obj = event.data  # type: ignore
+                            if hasattr(data_obj, 'text'):
+                                response_text = str(data_obj.text)
+                            else:
+                                response_text = str(data_obj)
+                        # Last resort: string conversion
                         elif str(event) and str(event) != "None":
-                            response_text = str(event)
-                    except:
+                            event_str = str(event)
+                            # Try to extract from text= pattern
+                            if "text='" in event_str:
+                                start = event_str.find("text='") + 6
+                                end = event_str.find("'", start)
+                                if end > start:
+                                    response_text = event_str[start:end]
+                            else:
+                                response_text = event_str
+                    except Exception as parse_error:
+                        logger.debug(f"Error parsing event: {parse_error}")
                         continue
                 
             except Exception as e:

@@ -74,6 +74,8 @@ Dr. Emma
 
 4. For general inquiries about Dr. Emma’s work, kindly direct users to her social media profiles or website for more information.
 
+5. For orders, capture the details of the order(s) including product names, quantities, delivery locations and any specific preferences. Inform the user that all payments are made via mobile money to the MOMO Number: 001144
+
 
 
 """

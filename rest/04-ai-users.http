@@ -26,10 +26,10 @@ POST {{baseUrl}}:{{port}}/ai/users/add
 Content-Type: application/json
 
 {
-    "remoteJid": "256782241144@s.whatsapp.net",
-    "phoneNumber": "+256782241144",
-    "name": "Julie",
-    "notes": "High school friend. Lady Lawyer. Owns her own firm. Love milk, vacations and big boats"
+    "remoteJid": "256784330780@s.whatsapp.net",
+    "phoneNumber": "+256784330780",
+    "name": "Jael",
+    "notes": "Baby sister. Country Manager."
 }
 
 ###
@@ -162,7 +162,7 @@ PATCH {{baseUrl}}:{{port}}/ai/users/toggle
 Content-Type: application/json
 
 {
-    "remoteJid": "256703722777@s.whatsapp.net"
+    "remoteJid": "256784330780@s.whatsapp.net"
 }
 
 ###

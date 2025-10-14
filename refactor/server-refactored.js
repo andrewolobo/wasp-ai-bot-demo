@@ -2,7 +2,6 @@ const express = require('express');
 const WhatsAppDB = require('./libraries/database/db-helper');
 const AzureOpenAIHelper = require('./libraries/ai/azure-openai-helper');
 const queuePublisher = require('./libraries/queue/publisher');
-const queueConsumer = require('./libraries/queue/consumer');
 require('dotenv').config();
 
 // Import routes
@@ -29,23 +28,23 @@ const azureOpenAI = new AzureOpenAIHelper();
 async function initializeDatabase() {
     try {
         await db.connect();
-        console.log('[OK] Database connected successfully');
+        console.log('✅ Database connected successfully');
 
         // Validate Azure OpenAI configuration
         azureOpenAI.validateConfiguration();
-        console.log('[OK] Azure OpenAI configuration validated');
+        console.log('✅ Azure OpenAI configuration validated');
 
         // Validate Wasender API configuration
         if (!process.env.WASENDER_API_TOKEN) {
             throw new Error('WASENDER_API_TOKEN environment variable is required');
         }
         if (!process.env.WASENDER_API_URL) {
-            console.warn('[WARNING] WASENDER_API_URL not set, using default: https://wasenderapi.com/api/send-message');
+            console.warn('⚠️  WASENDER_API_URL not set, using default: https://wasenderapi.com/api/send-message');
         }
-        console.log('[OK] Wasender API configuration validated');
+        console.log('✅ Wasender API configuration validated');
 
     } catch (error) {
-        console.error('[ERROR] Initialization failed:', error.message);
+        console.error('❌ Initialization failed:', error.message);
         process.exit(1);
     }
 }
@@ -89,62 +88,45 @@ async function startServer() {
 
         // Initialize RabbitMQ connection if queue mode is enabled
         if (USE_QUEUE) {
-            console.log('[QUEUE] Queue mode enabled - connecting to RabbitMQ...');
-
-            // Initialize publisher (sends to ag_queue)
-            const publisherConnected = await queuePublisher.connect();
-            if (publisherConnected) {
-                console.log('[OK] RabbitMQ publisher initialized successfully');
+            console.log('🔌 Queue mode enabled - connecting to RabbitMQ...');
+            const queueConnected = await queuePublisher.connect();
+            if (queueConnected) {
+                console.log('✅ RabbitMQ publisher initialized successfully');
             } else {
-                console.warn('[WARNING] RabbitMQ publisher connection failed. Will retry automatically.');
-            }
-
-            // Initialize consumer (listens to wb_queue)
-            const consumerConnected = await queueConsumer.connect();
-            if (consumerConnected) {
-                console.log('[OK] RabbitMQ consumer initialized successfully');
-                console.log('[LISTEN] Listening for agent responses on wb_queue...');
-            } else {
-                console.warn('[WARNING] RabbitMQ consumer connection failed. Will retry automatically.');
+                console.warn('⚠️  RabbitMQ connection failed. Will retry automatically.');
             }
         } else {
-            console.log('[DIRECT] Direct mode enabled - AI requests will be processed synchronously');
+            console.log('⚡ Direct mode enabled - AI requests will be processed synchronously');
         }
 
         app.listen(PORT, () => {
-            console.log(`[SERVER] Server is running on http://localhost:${PORT}`);
-            console.log(`[MODE] AI Processing Mode: ${USE_QUEUE ? 'QUEUE (Async)' : 'DIRECT (Sync)'}`);
-            console.log('[ENDPOINTS] Available endpoints:');
+            console.log(`🚀 Server is running on http://localhost:${PORT}`);
+            console.log(`🎯 AI Processing Mode: ${USE_QUEUE ? 'QUEUE (Async)' : 'DIRECT (Sync)'}`);
+            console.log('📋 Available endpoints:');
             console.log('  POST /webhook - Receive WhatsApp webhooks');
             console.log('  GET /health - Health check');
         });
     } catch (error) {
-        console.error('[ERROR] Failed to start server:', error.message);
+        console.error('❌ Failed to start server:', error.message);
         process.exit(1);
     }
 }
 
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
-    console.log('[SHUTDOWN] Shutting down gracefully...');
+    console.log('⏹️  Shutting down gracefully...');
     try {
         // Close database connection
         await db.close();
-        console.log('[OK] Database connection closed');
+        console.log('✅ Database connection closed');
 
-        // Close RabbitMQ connections if queue mode was enabled
-        if (USE_QUEUE) {
-            if (queuePublisher.isConnected) {
-                await queuePublisher.close();
-                console.log('[OK] RabbitMQ publisher connection closed');
-            }
-            if (queueConsumer.isConnected) {
-                await queueConsumer.close();
-                console.log('[OK] RabbitMQ consumer connection closed');
-            }
+        // Close RabbitMQ connection if queue mode was enabled
+        if (USE_QUEUE && queuePublisher.isConnected) {
+            await queuePublisher.close();
+            console.log('✅ RabbitMQ connection closed');
         }
     } catch (error) {
-        console.error('[ERROR] Error during shutdown:', error.message);
+        console.error('❌ Error during shutdown:', error.message);
     }
     process.exit(0);
 });

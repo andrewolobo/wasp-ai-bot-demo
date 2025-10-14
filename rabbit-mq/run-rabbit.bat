@@ -7,3 +7,5 @@ docker run -d --name rabbitmq ^
   -v rabbitmq_logs:/var/log/rabbitmq ^
   --restart unless-stopped ^
   rabbitmq:4-management
+
+  

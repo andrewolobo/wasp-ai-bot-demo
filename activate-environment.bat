@@ -1,0 +1,1 @@
+.adk\Scripts\activate

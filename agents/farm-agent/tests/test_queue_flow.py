@@ -89,7 +89,7 @@ class QueueTester:
                     "name": "Test User"
                 },
                 "message": {
-                    "text": "I would like to make an order for 10 cows",
+                    "text": "Hello there, I would like information on how to enroll my student in your school",
                     "timestamp": int(datetime.now().timestamp()),
                     "type": "text"
                 },

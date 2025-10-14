@@ -8,6 +8,7 @@
 .env.production
 .env.staging
 *.env
+.adk
 
 # API Keys and Configuration Files
 config/secrets.json
