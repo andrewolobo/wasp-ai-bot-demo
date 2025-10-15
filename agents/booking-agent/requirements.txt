@@ -1,0 +1,34 @@
+# Core Google ADK dependencies
+google-adk>=0.1.0
+
+# LLM and API dependencies
+litellm>=1.0.0
+openai>=1.0.0
+
+# Environment and configuration
+python-dotenv>=1.0.0
+
+# RabbitMQ async client (for queue processing)
+aio-pika>=9.0.0
+
+# Async support
+asyncio-mqtt>=0.16.0  # Optional: if MQTT is needed
+aiofiles>=23.0.0  # Optional: for async file operations
+
+# Database and data processing
+pandas>=2.0.0
+# sqlite3  # Built-in with Python
+
+# HTTP requests
+requests>=2.31.0
+httpx>=0.24.0  # Modern async HTTP client
+
+# Additional utilities
+pytz>=2023.3  # For timezone handling
+phonenumbers>=8.13.0  # For phone number validation and formatting
+
+# Development and testing (optional)
+# pytest>=7.4.0
+# pytest-asyncio>=0.21.0
+# black>=23.0.0
+# flake8>=6.0.0

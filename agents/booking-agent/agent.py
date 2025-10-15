@@ -1,9 +1,12 @@
 """
-Farm Agent
+Booking Agent
 ======================================
 
-This agent handles payment collection requests from WhatsApp messages.
+This agent handles booking requests from WhatsApp messages.
 It uses Google ADK with Azure OpenAI and processes messages from RabbitMQ.
+
+NOTE: This is a template agent. Customize the prompt.py file to define
+your specific agent's behavior and functionality.
 """
 
 from google.adk.agents import Agent
@@ -21,8 +24,8 @@ from prompt import DESCRIPTION, INSTRUCTIONS
 load_dotenv()
 
 
-class FarmAgentConfig:
-    """Configuration for the Farm Agent"""
+class BookingAgentConfig:
+    """Configuration for the Booking Agent"""
     
     def __init__(self):
         # Azure OpenAI Configuration
@@ -38,7 +41,7 @@ class FarmAgentConfig:
             raise ValueError("AZURE_OPENAI_API_KEY is required")
         
         # Agent Configuration
-        self.agent_name = "farm_agent"
+        self.agent_name = "booking_agent"
         
     def get_model_name(self) -> str:
         """Get the full model name for Azure"""
@@ -46,12 +49,12 @@ class FarmAgentConfig:
 
 
 # Initialize configuration
-config = FarmAgentConfig()
+config = BookingAgentConfig()
 
 
 def create_agent() -> Agent:
     """
-    Create and configure the Farm Agent
+    Create and configure the Booking Agent
     
     Returns:
         Configured Agent instance
@@ -99,7 +102,7 @@ def create_runner(agent: Optional[Agent] = None,
         session_service = create_session_service()
     
     runner = Runner(
-        app_name="farm_agent",
+        app_name="booking_agent",
         agent=agent,
         session_service=session_service
     )

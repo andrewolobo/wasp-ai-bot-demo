@@ -26,10 +26,10 @@ POST {{baseUrl}}:{{port}}/ai/users/add
 Content-Type: application/json
 
 {
-    "remoteJid": "256784330780@s.whatsapp.net",
-    "phoneNumber": "+256784330780",
-    "name": "Jael",
-    "notes": "Baby sister. Country Manager."
+    "remoteJid": "256772589613@s.whatsapp.net",
+    "phoneNumber": "+256772589613",
+    "name": "Edwin",
+    "notes": "Finance Guru. Data analyst. Sharp dude. Treat him respectfully"
 }
 
 ###
