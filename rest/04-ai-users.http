@@ -28,8 +28,8 @@ Content-Type: application/json
 {
     "remoteJid": "256772589613@s.whatsapp.net",
     "phoneNumber": "+256772589613",
-    "name": "Edwin",
-    "notes": "Finance Guru. Data analyst. Sharp dude. Treat him respectfully"
+    "name": "Dr. Emma",
+    "notes": "Prestiged Doctor. Owner of MST. Cheerful, delightful lady. Treat her well."
 }
 
 ###
@@ -162,7 +162,7 @@ PATCH {{baseUrl}}:{{port}}/ai/users/toggle
 Content-Type: application/json
 
 {
-    "remoteJid": "256784330780@s.whatsapp.net"
+    "remoteJid": "256774291444@s.whatsapp.net"
 }
 
 ###
